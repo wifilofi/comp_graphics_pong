@@ -9,6 +9,7 @@
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
+//
     auto *game = Game::Instance();
     auto *ball = new Pong::Ball();
     ball->Compose(float2(0, 0), float2(0.025f * 2 / 3, 0.025f), 1, 0.02f);

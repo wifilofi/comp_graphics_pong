@@ -11,7 +11,7 @@ Game *Game::Instance()
 
 void Game::Compose(const char16 *pName, float fixedDelta) const
 {
-    constexpr Point size = {1200, 800};
+    constexpr Point size = {750, 500};
     window_->Compose(pName, size);
     inputDevice_->Compose(window_->GetHandlerWindow());
     pipeline_->Compose(window_->GetHandlerWindow(), size);

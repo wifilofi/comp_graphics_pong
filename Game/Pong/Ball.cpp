@@ -41,7 +41,8 @@ void Ball::FixedUpdate()
 void Ball::Render(float alpha)
 {
     const float3 offset = position_.Get(alpha) - startPosition_;
-    const AdditionData additionData{float4(offset), float4(1)};
+    const float4 size(boundingBox_.Extents.x, boundingBox_.Extents.y, 0, 0);
+    const AdditionData additionData{float4(offset.x, offset.y, offset.z, 1), float4(1), size};
     D3D11_MAPPED_SUBRESOURCE subresource = {};
     sprite_.GetPipeline()->GetDeviceContext()->Map(
         pAdditionDataBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource);
@@ -49,6 +50,7 @@ void Ball::Render(float alpha)
     memcpy(pData, &additionData, sizeof(AdditionData));
     sprite_.GetPipeline()->GetDeviceContext()->Unmap(pAdditionDataBuffer_, 0);
     sprite_.GetPipeline()->GetDeviceContext()->VSSetConstantBuffers(0, 1, &pAdditionDataBuffer_);
+    sprite_.GetPipeline()->GetDeviceContext()->PSSetConstantBuffers(0, 1, &pAdditionDataBuffer_);
 
     sprite_.Render(alpha);
 }

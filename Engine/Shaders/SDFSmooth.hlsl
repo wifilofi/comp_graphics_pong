@@ -14,6 +14,7 @@ struct Addition
 {
     float4 offset;
     float4 color;
+    float4 size;
 };
 
 cbuffer AdditionBuffer : register(b0)
@@ -45,23 +46,18 @@ float sdRoundedBox(float2 p, float2 b, float r)
 
 float4 PSMain( PS_IN input ) : SV_Target
 {
-    // 1. Remap UV from [0, 1] to [-1, 1] to center the coordinate system
     float2 p = input.uv * 2.0 - 1.0;
 
-    // 2. Define dimensions
-    // size.x/y should be slightly less than 1.0 to stay within the quad
-    float2 size = float2(0.8, 0.8);
-    float radius = 0.8;
+    float aspect = AdditionData.size.x / AdditionData.size.y;
+    float2 scaledP = p * float2(aspect, 1.0);
+    float2 b = float2(aspect, 1.0) * 0.9;
+    float radius = aspect * 0.9;
 
-    // 3. Calculate distance
-    float dist = sdRoundedBox(p, size, radius);
+    float dist = sdRoundedBox(scaledP, b, radius * 1.5);
 
-    // 4. Smoothstep for basic anti-aliasing
-    // fwidth(dist) helps keep the edge sharpness consistent regardless of zoom/resolution
-    float edgeSmoothing = fwidth(dist);
+    float edgeSmoothing = fwidth(dist) / 10;
     float mask = smoothstep(edgeSmoothing, -edgeSmoothing, dist);
 
-    // 5. Apply the color from our constant buffer
     float4 finalColor = float4(1, 1, 1, 1) * mask;
     //finalColor.a 1;*= mask;
 
