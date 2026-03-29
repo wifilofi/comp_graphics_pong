@@ -12,12 +12,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 //
     auto *game = Game::Instance();
     auto *ball = new Pong::Ball();
-    ball->Compose(float2(0, 0), float2(0.025f * 2 / 3, 0.025f), 1, 0.02f);
+    ball->Compose(float2(0, 0), float2(0.05f * 2 / 3, 0.05f), 1, 0.02f);
 
     auto *stick1 = new Pong::StickPlayer();
-    stick1->Compose(float2(-0.9f, 0), float2(0.01f, 0.2f), Pong::Side::Left, 1, game->GetInputDevice());
+    stick1->Compose(float2(-0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Left, 1, game->GetInputDevice());
     auto *stick2 = new Pong::StickAI();
-    stick2->Compose(float2(0.9f, 0), float2(0.01f, 0.2f), Pong::Side::Right, 1, ball);
+    stick2->Compose(float2(0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Right, 1, ball);
 
     auto *wallUp = new Pong::Wall();
     wallUp->Compose(float2(0, 2), float2(2, 1));
