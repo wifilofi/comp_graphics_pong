@@ -25,6 +25,7 @@ void Game::Run()
     while (!isFinished_)
     {
         Input();
+        if (isFinished_) break;
         fixedUpdate_->Update();
         Update();
         pipeline_->Render(fixedUpdate_->GetAlpha());
@@ -50,11 +51,11 @@ void Game::Input()
 
     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
     {
+        if (msg.message == WM_QUIT) { isFinished_ = true; return; }
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 
-    if (msg.message == WM_QUIT) isFinished_ = true;
     if (inputDevice_->IsKeyDown(Input::Keyboard::Keys::Escape)) isFinished_ = true;
 }
 
