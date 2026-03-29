@@ -70,5 +70,13 @@ PInt64 Window::WindowProcedure(PHandlerWindow pHandlerWindow, uint32 message, PU
         PostQuitMessage(0);
         return 0;
     }
+    if (message == WM_SIZE)
+    {
+        const int w = LOWORD(pIntParam);
+        const int h = HIWORD(pIntParam);
+        if (w > 0 && h > 0)
+            Game::Instance()->GetRenderPipeline()->Resize(w, h);
+        return 0;
+    }
     return Game::Instance()->GetInputDevice()->HandleInput(pHandlerWindow, message, pUintParam, pIntParam);
 }

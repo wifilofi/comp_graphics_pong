@@ -1,4 +1,5 @@
 #include "Pipeline.h"
+#include <d3d11_1.h>
 
 #pragma comment(lib, "d3d11.lib")
 
@@ -8,6 +9,7 @@ void Pipeline::Compose(PHandlerWindow pHandlerWindow, const Point& size)
 {
     hwnd_ = pHandlerWindow;
     size_ = size;
+    gameSize_ = size;
     viewport_.Width = static_cast<float>(size.x);
     viewport_.Height = static_cast<float>(size.y);
     viewport_.TopLeftX = 0;
@@ -21,8 +23,27 @@ void Pipeline::Render(float delta) const
 {
     pDeviceContext_->ClearState();
     pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, nullptr);
-    constexpr float color[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    pDeviceContext_->ClearRenderTargetView(pRenderTargetView_, color);
+
+    // Black for the letterbox/pillarbox bars
+    constexpr float black[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    pDeviceContext_->ClearRenderTargetView(pRenderTargetView_, black);
+
+    // #2c4b76 for the game area only
+    ID3D11DeviceContext1* pContext1 = nullptr;
+    pDeviceContext_->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&pContext1));
+    if (pContext1)
+    {
+        constexpr float gameColor[] = {0x2c / 255.0f, 0x4b / 255.0f, 0x76 / 255.0f, 1.0f};
+        const D3D11_RECT rect = {
+            static_cast<LONG>(viewport_.TopLeftX),
+            static_cast<LONG>(viewport_.TopLeftY),
+            static_cast<LONG>(viewport_.TopLeftX + viewport_.Width),
+            static_cast<LONG>(viewport_.TopLeftY + viewport_.Height)
+        };
+        pContext1->ClearView(pRenderTargetView_, gameColor, &rect, 1);
+        pContext1->Release();
+    }
+
     pDeviceContext_->RSSetViewports(1, &viewport_);
     for (auto* pRenderAble : renderAbles_)
     {
@@ -30,6 +51,40 @@ void Pipeline::Render(float delta) const
         pRenderAble->Render(delta);
     }
     pSwapChain_->Present(1, 0);
+}
+
+void Pipeline::Resize(int newWidth, int newHeight)
+{
+    if (!pSwapChain_) return;
+
+    pDeviceContext_->OMSetRenderTargets(0, nullptr, nullptr);
+    pDeviceContext_->ClearState();
+    pDeviceContext_->Flush();
+
+    pRenderTargetView_->Release();
+    pRenderTargetView_ = nullptr;
+
+    pSwapChain_->ResizeBuffers(0, newWidth, newHeight, DXGI_FORMAT_UNKNOWN, 0);
+
+    ComposeRenderTargetView();
+
+    const float gameAspect = static_cast<float>(gameSize_.x) / static_cast<float>(gameSize_.y);
+    const float winAspect  = static_cast<float>(newWidth) / static_cast<float>(newHeight);
+
+    if (winAspect > gameAspect)
+    {
+        viewport_.Height   = static_cast<float>(newHeight);
+        viewport_.Width    = viewport_.Height * gameAspect;
+        viewport_.TopLeftX = (static_cast<float>(newWidth) - viewport_.Width) / 2.0f;
+        viewport_.TopLeftY = 0.0f;
+    }
+    else
+    {
+        viewport_.Width    = static_cast<float>(newWidth);
+        viewport_.Height   = viewport_.Width / gameAspect;
+        viewport_.TopLeftX = 0.0f;
+        viewport_.TopLeftY = (static_cast<float>(newHeight) - viewport_.Height) / 2.0f;
+    }
 }
 
 void Pipeline::Destroy() const
@@ -78,4 +133,5 @@ void Pipeline::ComposeRenderTargetView()
     ID3D11Texture2D* backgroundTexture;
     pSwapChain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backgroundTexture));
     pDevice_->CreateRenderTargetView(backgroundTexture, nullptr, &pRenderTargetView_);
+    backgroundTexture->Release();
 }

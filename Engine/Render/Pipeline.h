@@ -16,6 +16,7 @@ namespace Engine
         public:
             void Compose(PHandlerWindow pHandlerWindow, const Point& size);
             void Render(float delta) const;
+            void Resize(int newWidth, int newHeight);
             void Destroy() const;
             void Add(Able* pRenderAble);
 
@@ -28,6 +29,7 @@ namespace Engine
             void ComposeRenderTargetView();
 
             Point size_{};
+            Point gameSize_{};
             DXViewport viewport_{};
             Microsoft::WRL::ComPtr<DXDevice> pDevice_;
             DXDeviceContext* pDeviceContext_ = nullptr;
