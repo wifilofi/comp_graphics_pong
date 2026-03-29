@@ -23,7 +23,37 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 include(CompilerAndLinker.cmake)
 
-add_executable(${PROJECT_NAME} WIN32)
+add_executable(${PROJECT_NAME} WIN32
+        Engine/Basic/Components/Rendering.cpp
+        Engine/Basic/Components/Rendering.h
+        Engine/Basic/Shapes/Square.cpp
+        Engine/Basic/Shapes/Square.h
+        Engine/Input/Device.cpp
+        Engine/Input/Device.h
+        Engine/Input/Keyboard.h
+        Engine/Input/Mouse.h
+        Engine/Input/PC.cpp
+        Engine/Input/PC.h
+        Engine/Lib/Delegates.cpp
+        Engine/Lib/Delegates.h
+        Engine/Lib/TimeAccumulator.cpp
+        Engine/Lib/TimeAccumulator.h
+        Engine/Lib/Types.h
+        Engine/Physics/Collide.cpp
+        Engine/Physics/Collide.h
+        Engine/Physics/CollideAble.h
+        Engine/Physics/Move.cpp
+        Engine/Physics/Move.h
+        Engine/Physics/MoveAble.h
+        Engine/Render/Able.h
+        Engine/Render/Pipeline.cpp
+        Engine/Render/Pipeline.h
+        Engine/Render/Window.cpp
+        Engine/Render/Window.h
+        Engine/Update/Fixed.cpp
+        Engine/Update/Fixed.h
+        Engine/Update/FixedAble.h
+        Engine/Game/Game.cpp)
 
 target_sources(${PROJECT_NAME}
     PRIVATE
@@ -35,7 +65,7 @@ if(NOT MINGW)
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    d3d11.lib dxgi.lib dxguid.lib uuid.lib
+    d3d11.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
     kernel32.lib user32.lib
     comdlg32.lib advapi32.lib shell32.lib
     ole32.lib oleaut32.lib
