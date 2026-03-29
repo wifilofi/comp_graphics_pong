@@ -8,12 +8,12 @@ void PC::Compose(PHandlerWindow pHandlerWindow)
 
     RAWINPUTDEVICE devices[2];
 
-    devices[0].usUsagePage = 1; // Keyboard
+    devices[0].usUsagePage = 1; // Mouse
     devices[0].usUsage = 2;
     devices[0].dwFlags = 0;
     devices[0].hwndTarget = pHandlerWindow;
 
-    devices[1].usUsagePage = 1; // Mouse
+    devices[1].usUsagePage = 1; // Keyboard
     devices[1].usUsage = 6;
     devices[1].dwFlags = 0;
     devices[1].hwndTarget = pHandlerWindow;
@@ -55,6 +55,7 @@ void PC::Destroy()
 
 RAWINPUT* PC::ReadRawInput(uint32* pSize, PInt64 pIntParam)
 {
+    *pSize = sizeof(inputBuffer_);
     GetRawInputData(reinterpret_cast<PHandlerRawInput>(pIntParam), RID_INPUT,
                     inputBuffer_, pSize, sizeof(RAWINPUTHEADER));
     return reinterpret_cast<RawInput*>(inputBuffer_);

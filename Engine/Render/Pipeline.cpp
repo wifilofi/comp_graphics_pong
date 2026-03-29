@@ -6,7 +6,8 @@ using namespace Engine::Render;
 
 void Pipeline::Compose(PHandlerWindow pHandlerWindow, const Point& size)
 {
-    hwnd_ = pHandlerWindow; 
+    hwnd_ = pHandlerWindow;
+    size_ = size;
     viewport_.Width = static_cast<float>(size.x);
     viewport_.Height = static_cast<float>(size.y);
     viewport_.TopLeftX = 0;
@@ -67,7 +68,7 @@ void Pipeline::ComposeDeviceAndSwapChain(PHandlerWindow pHandlerWindow)
     swapChainDescriptor.SampleDesc.Quality = 0;
 
     D3D11CreateDeviceAndSwapChain(
-        nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_DEBUG,
+        nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
         featureLevel, 1, D3D11_SDK_VERSION, &swapChainDescriptor,
         &pSwapChain_, &pDevice_, nullptr, &pDeviceContext_);
 }
