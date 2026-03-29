@@ -7,7 +7,7 @@ struct VS_IN
 struct PS_IN
 {
     float4 pos : SV_POSITION;
-    float4 col : COLOR;
+    float2 uv  : TEXCOORD0;
 };
 
 struct Addition
@@ -26,13 +26,12 @@ PS_IN VSMain( VS_IN input )
     PS_IN output;
 
     output.pos = float4(input.pos.xyz + AdditionData.offset.xyz, 1);
-    output.col = AdditionData.color;
+    output.uv  = input.pos.xy * 0.5 + 0.5;
 
     return output;
 }
 
 float4 PSMain( PS_IN input ) : SV_Target
 {
-    float4 col = input.col;
-    return col;
+    return float4(input.uv, 0, 1);
 }

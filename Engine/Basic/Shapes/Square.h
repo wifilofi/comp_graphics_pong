@@ -4,6 +4,7 @@
 
 namespace Basic
 {
+    
     namespace Shapes
     {
         class Square : public Components::Rendering
