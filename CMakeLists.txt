@@ -27,13 +27,7 @@ add_executable(${PROJECT_NAME} WIN32)
 
 target_sources(${PROJECT_NAME}
     PRIVATE
-        Game.cpp
-        Game.h
-        DeviceResources.cpp
-        DeviceResources.h
         Main.cpp
-        StepTimer.h
-        pch.h
 )
 
 if(NOT MINGW)
