@@ -1,4 +1,4 @@
-﻿#include "Ball.h"
+#include "Ball.h"
 
 #include <cmath>
 
@@ -35,12 +35,13 @@ void Ball::Compose(Engine::Render::Pipeline *pPipeline)
 
 void Ball::FixedUpdate()
 {
-    offset_ = boundingBox_.Center - startPosition_;
+    position_.Advance(boundingBox_.Center);
 }
 
-void Ball::Render(float delta)
+void Ball::Render(float alpha)
 {
-    const AdditionData additionData{float4(offset_), float4(1)};
+    const float3 offset = position_.Get(alpha) - startPosition_;
+    const AdditionData additionData{float4(offset), float4(1)};
     D3D11_MAPPED_SUBRESOURCE subresource = {};
     sprite_.GetPipeline()->GetDeviceContext()->Map(
         pAdditionDataBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource);
@@ -49,8 +50,7 @@ void Ball::Render(float delta)
     sprite_.GetPipeline()->GetDeviceContext()->Unmap(pAdditionDataBuffer_, 0);
     sprite_.GetPipeline()->GetDeviceContext()->VSSetConstantBuffers(0, 1, &pAdditionDataBuffer_);
 
-    sprite_.Render(delta);
-    offset_ += float3(velocity_ * delta);
+    sprite_.Render(alpha);
 }
 
 void Ball::Collided(Engine::Physics::CollideAble *other)

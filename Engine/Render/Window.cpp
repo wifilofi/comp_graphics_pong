@@ -65,5 +65,10 @@ void Window::ComposeHandlerWindow()
 
 PInt64 Window::WindowProcedure(PHandlerWindow pHandlerWindow, uint32 message, PUint64 pUintParam, PInt64 pIntParam)
 {
+    if (message == WM_DESTROY)
+    {
+        PostQuitMessage(0);
+        return 0;
+    }
     return Game::Instance()->GetInputDevice()->HandleInput(pHandlerWindow, message, pUintParam, pIntParam);
 }

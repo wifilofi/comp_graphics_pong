@@ -21,6 +21,7 @@ namespace Engine
 
             Lib::TimeAccumulator& GetTimer() { return timer_; }
             float GetDelta() const { return delta_; }
+            float GetAlpha() const { return static_cast<float>(timer_.GetAccumulated() / delta_); }
 
         private:
             Lib::TimeAccumulator timer_;

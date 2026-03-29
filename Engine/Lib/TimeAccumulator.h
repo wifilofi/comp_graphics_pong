@@ -15,7 +15,7 @@ namespace Lib
         double GetDelta() const { return delta_; }
 
     private:
-        std::chrono::system_clock::time_point current_;
+        std::chrono::steady_clock::time_point current_;
         double accumulated_ = 0;
         double delta_ = 0;
     };

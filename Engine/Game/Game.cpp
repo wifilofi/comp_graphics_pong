@@ -27,7 +27,7 @@ void Game::Run()
         Input();
         fixedUpdate_->Update();
         Update();
-        pipeline_->Render(static_cast<float>(fixedUpdate_->GetTimer().GetDelta()));
+        pipeline_->Render(fixedUpdate_->GetAlpha());
     }
 }
 

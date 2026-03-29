@@ -1,6 +1,7 @@
-﻿#pragma once
+#pragma once
 
 #include "../../Engine/Basic/Shapes/Square.h"
+#include "../../Engine/Lib/Interpolated.h"
 #include "../../Engine/Update/FixedAble.h"
 #include "../../Engine/Render/Pipeline.h"
 #include "../../Engine/Physics/CollideAble.h"
@@ -33,7 +34,7 @@ namespace Pong
         float2 velocity_;
         DXBuffer *pAdditionDataBuffer_ = nullptr;
         float3 startPosition_;
-        float3 offset_;
+        Lib::Interpolated<float3> position_;
         float startSpeed_ = 0;
         float speedIncrease_ = 0;
     };

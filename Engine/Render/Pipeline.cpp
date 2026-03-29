@@ -29,7 +29,7 @@ void Pipeline::Render(float delta) const
         pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, nullptr);
         pRenderAble->Render(delta);
     }
-    pSwapChain_->Present(1, DXGI_PRESENT_DO_NOT_WAIT);
+    pSwapChain_->Present(1, 0);
 }
 
 void Pipeline::Destroy() const
