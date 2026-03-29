@@ -27,6 +27,7 @@ namespace Engine
         private:
             void ComposeDeviceAndSwapChain(PHandlerWindow pHandlerWindow);
             void ComposeRenderTargetView();
+            void ComposeBlendState();
 
             Point size_{};
             Point gameSize_{};
@@ -35,6 +36,7 @@ namespace Engine
             DXDeviceContext* pDeviceContext_ = nullptr;
             DXSwapChain* pSwapChain_ = nullptr;
             DXRenderTargetView* pRenderTargetView_ = nullptr;
+            DXBlendState* pBlendState_ = nullptr;
             std::vector<Able*> renderAbles_{};
             PHandlerWindow hwnd_ = nullptr;
         };

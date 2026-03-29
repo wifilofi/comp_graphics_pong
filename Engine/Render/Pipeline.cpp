@@ -18,6 +18,7 @@ void Pipeline::Compose(PHandlerWindow pHandlerWindow, const Point& size)
     viewport_.MaxDepth = 1.0f;
     ComposeDeviceAndSwapChain(pHandlerWindow);
     ComposeRenderTargetView();
+    ComposeBlendState();
 }
 void Pipeline::Render(float delta) const
 {
@@ -44,6 +45,8 @@ void Pipeline::Render(float delta) const
         pContext1->Release();
     }
 
+    constexpr float blendFactor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    pDeviceContext_->OMSetBlendState(pBlendState_, blendFactor, 0xFFFFFFFF);
     pDeviceContext_->RSSetViewports(1, &viewport_);
     for (auto* pRenderAble : renderAbles_)
     {
@@ -89,6 +92,7 @@ void Pipeline::Resize(int newWidth, int newHeight)
 
 void Pipeline::Destroy() const
 {
+    pBlendState_->Release();
     pRenderTargetView_->Release();
     pSwapChain_->Release();
     pDeviceContext_->Release();
@@ -126,6 +130,20 @@ void Pipeline::ComposeDeviceAndSwapChain(PHandlerWindow pHandlerWindow)
         nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
         featureLevel, 1, D3D11_SDK_VERSION, &swapChainDescriptor,
         &pSwapChain_, &pDevice_, nullptr, &pDeviceContext_);
+}
+
+void Pipeline::ComposeBlendState()
+{
+    D3D11_BLEND_DESC blendDescriptor = {};
+    blendDescriptor.RenderTarget[0].BlendEnable           = TRUE;
+    blendDescriptor.RenderTarget[0].SrcBlend              = D3D11_BLEND_SRC_ALPHA;
+    blendDescriptor.RenderTarget[0].DestBlend             = D3D11_BLEND_INV_SRC_ALPHA;
+    blendDescriptor.RenderTarget[0].BlendOp               = D3D11_BLEND_OP_ADD;
+    blendDescriptor.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
+    blendDescriptor.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ZERO;
+    blendDescriptor.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
+    blendDescriptor.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    pDevice_->CreateBlendState(&blendDescriptor, &pBlendState_);
 }
 
 void Pipeline::ComposeRenderTargetView()

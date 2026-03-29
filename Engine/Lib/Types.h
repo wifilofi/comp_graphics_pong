@@ -50,3 +50,4 @@ typedef ID3D11PixelShader DXPixelShader;
 typedef ID3D11InputLayout DXInputLayout;
 typedef ID3D11Buffer DXBuffer;
 typedef ID3D11RasterizerState DXRasterizerState;
+typedef ID3D11BlendState DXBlendState;

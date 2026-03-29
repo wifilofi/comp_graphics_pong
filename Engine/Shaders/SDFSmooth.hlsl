@@ -53,13 +53,13 @@ float4 PSMain( PS_IN input ) : SV_Target
     float2 b = float2(aspect, 1.0) * 0.9;
     float radius = aspect * 0.9;
 
-    float dist = sdRoundedBox(scaledP, b, radius * 1.5);
+    float dist = sdRoundedBox(scaledP, b, radius * 1.3);
 
-    float edgeSmoothing = fwidth(dist) / 10;
+    float edgeSmoothing = fwidth(dist) / 2;
     float mask = smoothstep(edgeSmoothing, -edgeSmoothing, dist);
 
     float4 finalColor = float4(1, 1, 1, 1) * mask;
-    //finalColor.a 1;*= mask;
+    finalColor.a *= mask;
 
     return finalColor;
 }
