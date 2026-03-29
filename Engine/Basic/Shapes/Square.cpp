@@ -33,9 +33,9 @@ void Square::Compose(const float2& center, const float2& size)
 void Square::Compose(Engine::Render::Pipeline* pPipeline)
 {
     Rendering::Compose(pPipeline);
-
-    CreateVertexShader(L"././Shaders/Shader.hlsl", nullptr, nullptr);
-    CreatePixelShader(L"././Shaders/Shader.hlsl", nullptr, nullptr);
+//
+    CreateVertexShader(L"././Shaders/SDFSmooth.hlsl", nullptr, nullptr);
+    CreatePixelShader(L"././Shaders/SDFSmooth.hlsl", nullptr, nullptr);
     CreateLayout();
     CreateVertexBuffer(4 * 2);
     CreateIndexBuffer(3 * 2);
