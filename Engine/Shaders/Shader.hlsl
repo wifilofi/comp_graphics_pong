@@ -26,7 +26,7 @@ PS_IN VSMain( VS_IN input )
     PS_IN output;
 
     output.pos = float4(input.pos.xyz + AdditionData.offset.xyz, 1);
-    output.uv  = input.pos.xy * 0.5 + 0.5;
+    output.uv  = input.col.xy;
 
     return output;
 }

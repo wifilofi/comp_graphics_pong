@@ -10,13 +10,13 @@ using namespace Basic::Shapes;
 void Square::Compose(const float2& center, const float2& size)
 {
     pointsSquare_[0] = float4(center.x + size.x, center.y + size.y, 0.5f, 1.0f);
-    pointsSquare_[1] = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    pointsSquare_[1] = float4(1.0f, 0.0f, 0.0f, 0.0f); // uv (1, 0) top-right
     pointsSquare_[2] = float4(center.x - size.x, center.y - size.y, 0.5f, 1.0f);
-    pointsSquare_[3] = float4(0.0f, 0.0f, 1.0f, 1.0f);
+    pointsSquare_[3] = float4(0.0f, 1.0f, 0.0f, 0.0f); // uv (0, 1) bottom-left
     pointsSquare_[4] = float4(center.x + size.x, center.y - size.y, 0.5f, 1.0f);
-    pointsSquare_[5] = float4(0.0f, 1.0f, 0.0f, 1.0f);
+    pointsSquare_[5] = float4(1.0f, 1.0f, 0.0f, 0.0f); // uv (1, 1) bottom-right
     pointsSquare_[6] = float4(center.x - size.x, center.y + size.y, 0.5f, 1.0f);
-    pointsSquare_[7] = float4(1.0f, 1.0f, 1.0f, 1.0f);
+    pointsSquare_[7] = float4(0.0f, 0.0f, 0.0f, 0.0f); // uv (0, 0) top-left
     pPoints_ = pointsSquare_;
 
     indicesSquare_[0] = 0;
