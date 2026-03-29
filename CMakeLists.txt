@@ -53,7 +53,16 @@ add_executable(${PROJECT_NAME} WIN32
         Engine/Update/Fixed.cpp
         Engine/Update/Fixed.h
         Engine/Update/FixedAble.h
-        Engine/Game/Game.cpp)
+        Engine/Game/Game.cpp
+        Game/Pong/Ball.cpp
+        Game/Pong/Wall.h
+        Game/Pong/Wall.cpp
+        Game/Pong/StickPlayer.h
+        Game/Pong/StickPlayer.cpp
+        Game/Pong/Stick.cpp
+        Game/Pong/Stick.cpp
+        Game/Pong/Counter.cpp
+        Game/Pong/StickAI.cpp)
 
 target_sources(${PROJECT_NAME}
     PRIVATE
