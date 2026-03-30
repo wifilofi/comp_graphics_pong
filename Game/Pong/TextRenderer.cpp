@@ -1,16 +1,23 @@
 #include "TextRenderer.h"
 #include "../../Engine/Render/Pipeline.h"
-#include <DirectXColors.h>
 
 using namespace Pong;
 
+void TextRenderer::Compose(float2 position, float fontSize, float4 color)
+{
+    position_ = position;
+    fontSize_ = fontSize;
+    color_    = color;
+}
+
 void TextRenderer::Compose(Engine::Render::Pipeline *pPipeline)
 {
-    pPipeline_ = pPipeline;
+    pPipeline_   = pPipeline;
     spriteBatch_ = std::make_unique<DirectX::SpriteBatch>(pPipeline->GetDeviceContext());
     try
     {
         spriteFont_ = std::make_unique<DirectX::SpriteFont>(pPipeline->GetDevice(), L"Fonts/teko.spritefont");
+        scale_ = fontSize_ / spriteFont_->GetLineSpacing();
     }
     catch (...) {}
 }
@@ -21,16 +28,19 @@ void TextRenderer::Render(float delta)
         return;
 
     const DirectX::XMVECTOR measured = spriteFont_->MeasureString(text_.c_str());
-    const float textWidth = DirectX::XMVectorGetX(measured);
+    const float textWidth  = DirectX::XMVectorGetX(measured) * scale_;
+    const float textHeight = DirectX::XMVectorGetY(measured) * scale_;
 
     const DXViewport& vp = pPipeline_->GetViewport();
-    const DirectX::XMFLOAT2 pos = {
-        vp.TopLeftX + (vp.Width - textWidth) * 0.5f,
-        vp.TopLeftY + 20.f
-    };
+    DirectX::XMFLOAT2 pos{};
+    pos.x = vp.TopLeftX + position_.x * vp.Width  - textWidth  * 0.5f;
+    pos.y = vp.TopLeftY + position_.y * vp.Height - textHeight * 0.5f;
+
+    const DirectX::XMVECTOR colorVec = DirectX::XMLoadFloat4(&color_);
 
     spriteBatch_->Begin();
-    spriteFont_->DrawString(spriteBatch_.get(), text_.c_str(), pos, DirectX::Colors::White);
+    spriteFont_->DrawString(spriteBatch_.get(), text_.c_str(), pos, colorVec,
+                            0.f, DirectX::XMFLOAT2(0.f, 0.f), scale_);
     spriteBatch_->End();
 }
 
