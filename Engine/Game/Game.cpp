@@ -55,7 +55,7 @@ void Game::Input()
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
+//
     if (inputDevice_->IsKeyDown(Input::Keyboard::Keys::Escape)) isFinished_ = true;
 }
 

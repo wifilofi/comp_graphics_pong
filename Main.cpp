@@ -33,7 +33,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     counter->Compose(wallLeft, wallRight);
 
     auto *textRenderer = new Pong::TextRenderer();
-    textRenderer->Compose(float2(0.5f, 0.05f), 48.f, float4(1.f, 1.f, 1.f, 1.f));
+
+    textRenderer->Compose(float2(0.5f, 0.1f), 64.f, float4(1.f, 1.f, 1.f, 1.f));
     counter->ScoreChangedEvent.AddRaw(textRenderer, &Pong::TextRenderer::SetText);
 
     game->Compose(L"Game", 0.01f);

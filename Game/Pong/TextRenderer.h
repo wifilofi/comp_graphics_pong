@@ -1,6 +1,7 @@
 #pragma once
 #include "../../Engine/Render/Able.h"
 #include "../../Engine/Lib/Types.h"
+#include <CommonStates.h>
 #include <SpriteBatch.h>
 #include <SpriteFont.h>
 #include <memory>
@@ -20,6 +21,7 @@ namespace Pong
         void SetText(std::wstring text);
 
     private:
+        std::unique_ptr<DirectX::CommonStates> commonStates_;
         std::unique_ptr<DirectX::SpriteBatch> spriteBatch_;
         std::unique_ptr<DirectX::SpriteFont> spriteFont_;
         std::wstring text_;

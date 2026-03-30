@@ -12,8 +12,9 @@ void TextRenderer::Compose(float2 position, float fontSize, float4 color)
 
 void TextRenderer::Compose(Engine::Render::Pipeline *pPipeline)
 {
-    pPipeline_   = pPipeline;
-    spriteBatch_ = std::make_unique<DirectX::SpriteBatch>(pPipeline->GetDeviceContext());
+    pPipeline_    = pPipeline;
+    commonStates_ = std::make_unique<DirectX::CommonStates>(pPipeline->GetDevice());
+    spriteBatch_  = std::make_unique<DirectX::SpriteBatch>(pPipeline->GetDeviceContext());
     try
     {
         spriteFont_ = std::make_unique<DirectX::SpriteFont>(pPipeline->GetDevice(), L"Fonts/teko.spritefont");
@@ -33,12 +34,12 @@ void TextRenderer::Render(float delta)
 
     const DXViewport& vp = pPipeline_->GetViewport();
     DirectX::XMFLOAT2 pos{};
-    pos.x = vp.TopLeftX + position_.x * vp.Width  - textWidth  * 0.5f;
-    pos.y = vp.TopLeftY + position_.y * vp.Height - textHeight * 0.5f;
+    pos.x = std::floor(vp.TopLeftX + position_.x * vp.Width  - textWidth  * 0.5f);
+    pos.y = std::floor(vp.TopLeftY + position_.y * vp.Height - textHeight * 0.5f);
 
     const DirectX::XMVECTOR colorVec = DirectX::XMLoadFloat4(&color_);
 
-    spriteBatch_->Begin();
+    spriteBatch_->Begin(DirectX::SpriteSortMode_Deferred, nullptr, commonStates_->LinearClamp());
     spriteFont_->DrawString(spriteBatch_.get(), text_.c_str(), pos, colorVec,
                             0.f, DirectX::XMFLOAT2(0.f, 0.f), scale_);
     spriteBatch_->End();
