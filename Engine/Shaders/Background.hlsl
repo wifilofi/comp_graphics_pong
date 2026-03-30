@@ -21,7 +21,16 @@ PS_IN VSMain( VS_IN input )
     return output;
 }
 
+float3 hue(float h)
+{
+    float r = abs(h * 6.0 - 3.0) - 1.0;
+    float g = 2.0 - abs(h * 6.0 - 2.0);
+    float b = 2.0 - abs(h * 6.0 - 4.0);
+    return saturate(float3(r, g, b));
+}
+
 float4 PSMain( PS_IN input ) : SV_Target
 {
-    return float4(input.uv, time, 1);
+    float h = frac(time * 0.05);
+    return float4(hue(h), 1.0);
 }
