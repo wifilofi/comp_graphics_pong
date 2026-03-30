@@ -21,16 +21,24 @@ PS_IN VSMain( VS_IN input )
     return output;
 }
 
-float3 hue(float h)
-{
-    float r = abs(h * 6.0 - 3.0) - 1.0;
-    float g = 2.0 - abs(h * 6.0 - 2.0);
-    float b = 2.0 - abs(h * 6.0 - 4.0);
-    return saturate(float3(r, g, b));
-}
-
 float4 PSMain( PS_IN input ) : SV_Target
 {
-    float h = frac(time * 0.05);
-    return float4(hue(h), 1.0);
+    float timeSlowed = time * 0.05 + 100;
+    float2 fragCoord = input.uv * resolution;
+    float2 uv = fragCoord - resolution / 2.0;
+    uv = 2.0 * uv / resolution.y;
+
+    uv = uv / (1.0 + length(uv));
+
+    float pixel;
+    uv.x = uv.x + (0.1 * sin(uv.y * 10.0)) * sin(timeSlowed);
+    pixel = sign(fmod(uv.y + timeSlowed *  0.04, 0.2) - 0.1)
+              * sign(fmod(uv.x + timeSlowed *  0.12, 0.2) - 0.1);
+
+    float4 col = float4(0.027, 0.016, 0.161, 1);
+
+    if (pixel == 1.0)
+        col = float4(0.094, 0.086, 0.2, 1);
+
+    return col;
 }
