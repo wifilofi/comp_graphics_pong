@@ -1,5 +1,5 @@
 #pragma once
-#include "Able.h"
+#include "Renderer.h"
 #include "../Lib/Types.h"
 #include <CommonStates.h>
 #include <SpriteBatch.h>
@@ -9,12 +9,12 @@
 
 namespace Engine::Render
 {
-    class TextRenderer : public Engine::Render::Able
+    class TextRenderer : public Engine::Render::Renderer
     {
     public:
-        void Compose(float2 position, float fontSize, float4 color);
+        void Construct(float2 position, float fontSize, float4 color);
 
-        void Compose(Engine::Render::Pipeline *pPipeline) override;
+        void Construct(Engine::Render::Pipeline *pPipeline) override;
 
         void Render(float delta) override;
 

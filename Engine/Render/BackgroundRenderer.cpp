@@ -5,15 +5,15 @@
 
 using namespace Engine::Render;
 
-void BackgroundRenderer::Compose(const float2& center, const float2& size)
+void BackgroundRenderer::Construct(const float2& center, const float2& size)
 {
-    Square::Compose(center, size);
+    Square::Construct(center, size);
     extents_ = size;
 }
 
-void BackgroundRenderer::Compose(Engine::Render::Pipeline* pPipeline)
+void BackgroundRenderer::Construct(Engine::Render::Pipeline* pPipeline)
 {
-    Basic::Components::Rendering::Compose(pPipeline);
+    Basic::Components::Rendering::Construct(pPipeline);
     CreateVertexShader(L"././Shaders/shader.hlsl", nullptr, nullptr);
     CreatePixelShader(L"././Shaders/shader.hlsl", nullptr, nullptr);
     CreateLayout();

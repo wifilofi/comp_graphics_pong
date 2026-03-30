@@ -1,16 +1,16 @@
 ﻿#pragma once
 #include "Wall.h"
-#include "../../Engine/Render/Able.h"
+#include "../../Engine/Render/Renderer.h"
 #include <string>
 
 namespace Pong
 {
-    class Counter : public Engine::Render::Able
+    class Counter : public Engine::Render::Renderer
     {
     public:
-        void Compose(Wall *pLeft, Wall *pRight);
+        void Construct(Wall *pLeft, Wall *pRight);
 
-        void Compose(Engine::Render::Pipeline *pPipeline) override;
+        void Construct(Engine::Render::Pipeline *pPipeline) override;
 
         void Render(float delta) override;
 

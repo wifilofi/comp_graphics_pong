@@ -4,18 +4,18 @@
 
 using namespace Pong;
 
-void Stick::Compose(const float2& center, const float2& size, Side side, float speed)
+void Stick::Construct(const float2& center, const float2& size, Side side, float speed)
 {
-    sprite_.Compose(center, size);
+    sprite_.Construct(center, size);
     hand_ = side;
     speed_ = speed;
     boundingBox_ = DXBox(float3(center), float3(size));
     startPosition_ = float3(center);
 }
 
-void Stick::Compose(Engine::Render::Pipeline* pPipeline)
+void Stick::Construct(Engine::Render::Pipeline* pPipeline)
 {
-    sprite_.Compose(pPipeline);
+    sprite_.Construct(pPipeline);
 
     D3D11_BUFFER_DESC bufferDescriptor;
     bufferDescriptor.Usage = D3D11_USAGE_DYNAMIC;

@@ -2,23 +2,23 @@
 #include <vector>
 #include <wrl.h>
 #include <d3d11.h>
-#include "Able.h"
+#include "Renderer.h"
 #include "../Lib/Types.h"
 
 namespace Engine
 {
     namespace Render
     {
-        class Able;
+        class Renderer;
 
         class Pipeline final
         {
         public:
-            void Compose(PHandlerWindow pHandlerWindow, const Point& size);
+            void Construct(PHandlerWindow pHandlerWindow, const Point& size);
             void Render(float delta) const;
             void Resize(int newWidth, int newHeight);
             void Destroy() const;
-            void Add(Able* pRenderAble);
+            void Add(Renderer* pRenderAble);
 
             DXDevice* GetDevice() const { return pDevice_.Get(); }
             DXDeviceContext* GetDeviceContext() const { return pDeviceContext_; }
@@ -26,9 +26,9 @@ namespace Engine
             const DXViewport& GetViewport() const { return viewport_; }
 
         private:
-            void ComposeDeviceAndSwapChain(PHandlerWindow pHandlerWindow);
-            void ComposeRenderTargetView();
-            void ComposeBlendState();
+            void ConstructDeviceAndSwapChain(PHandlerWindow pHandlerWindow);
+            void ConstructRenderTargetView();
+            void ConstructBlendState();
 
             Point size_{};
             Point gameSize_{};
@@ -38,7 +38,7 @@ namespace Engine
             DXSwapChain* pSwapChain_ = nullptr;
             DXRenderTargetView* pRenderTargetView_ = nullptr;
             DXBlendState* pBlendState_ = nullptr;
-            std::vector<Able*> renderAbles_{};
+            std::vector<Renderer*> renderAbles_{};
             PHandlerWindow hwnd_ = nullptr;
         };
     }

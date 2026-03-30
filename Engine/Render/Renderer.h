@@ -6,12 +6,12 @@ namespace Engine
     {
         class Pipeline;
 
-        class Able
+        class Renderer
         {
         public:
-            virtual ~Able() = default;
+            virtual ~Renderer() = default;
 
-            virtual void Compose(Pipeline* pPipeline) {}
+            virtual void Construct(Pipeline* pPipeline) {}
             virtual void Render(float delta) {}
         };
     }

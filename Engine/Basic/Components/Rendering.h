@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../Lib/Types.h"
-#include "../../Render/Able.h"
+#include "../../Render/Renderer.h"
 
 namespace Engine::Render
 {
@@ -12,10 +12,10 @@ namespace Basic
 {
     namespace Components
     {
-        class Rendering : public Engine::Render::Able
+        class Rendering : public Engine::Render::Renderer
         {
         public:
-            void Compose(Engine::Render::Pipeline *pPipeline) override;
+            void Construct(Engine::Render::Pipeline *pPipeline) override;
 
             void Render(float delta) override;
 

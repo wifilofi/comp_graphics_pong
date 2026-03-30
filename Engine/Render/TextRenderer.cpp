@@ -3,14 +3,14 @@
 
 using namespace Engine::Render;
 
-void TextRenderer::Compose(float2 position, float fontSize, float4 color)
+void TextRenderer::Construct(float2 position, float fontSize, float4 color)
 {
     position_ = position;
     fontSize_ = fontSize;
     color_    = color;
 }
 
-void TextRenderer::Compose(Engine::Render::Pipeline *pPipeline)
+void TextRenderer::Construct(Engine::Render::Pipeline *pPipeline)
 {
     pPipeline_    = pPipeline;
     commonStates_ = std::make_unique<DirectX::CommonStates>(pPipeline->GetDevice());

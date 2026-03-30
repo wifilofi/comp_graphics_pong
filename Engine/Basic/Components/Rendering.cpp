@@ -6,7 +6,7 @@
 
 using namespace Basic::Components;
 
-void Rendering::Compose(Engine::Render::Pipeline* pPipeline)
+void Rendering::Construct(Engine::Render::Pipeline* pPipeline)
 {
     pPipeline_ = pPipeline;
 }

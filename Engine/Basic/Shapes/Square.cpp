@@ -7,7 +7,7 @@
 
 using namespace Basic::Shapes;
 
-void Square::Compose(const float2& center, const float2& size)
+void Square::Construct(const float2& center, const float2& size)
 {
     pointsSquare_[0] = float4(center.x + size.x, center.y + size.y, 0.5f, 1.0f);
     pointsSquare_[1] = float4(1.0f, 0.0f, 0.0f, 0.0f); // uv (1, 0) top-right
@@ -30,9 +30,9 @@ void Square::Compose(const float2& center, const float2& size)
     indicesAmount_ = 6;
 }
 
-void Square::Compose(Engine::Render::Pipeline* pPipeline)
+void Square::Construct(Engine::Render::Pipeline* pPipeline)
 {
-    Rendering::Compose(pPipeline);
+    Rendering::Construct(pPipeline);
 //
     CreateVertexShader(L"././Shaders/SDFSmooth.hlsl", nullptr, nullptr);
     CreatePixelShader(L"././Shaders/SDFSmooth.hlsl", nullptr, nullptr);

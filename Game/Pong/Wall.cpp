@@ -4,7 +4,7 @@
 
 using namespace Pong;
 
-void Wall::Compose(const float2& center, const float2& size)
+void Wall::Construct(const float2& center, const float2& size)
 {
     boundingBox_.Center = float3(center);
     boundingBox_.Extents = float3(size);

@@ -8,7 +8,7 @@ namespace Pong
     class Wall final : public Engine::Physics::CollideAble
     {
     public:
-        void Compose(const float2 &center, const float2 &size);
+        void Construct(const float2 &center, const float2 &size);
 
         void Collided(CollideAble *pOther) override;
 

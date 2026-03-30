@@ -14,34 +14,34 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 //
     auto *game = Game::Instance();
     auto *ball = new Pong::Ball();
-    ball->Compose(float2(0, 0), float2(0.05f * 2 / 3, 0.05f), 1, 0.02f);
+    ball->Construct(float2(0, 0), float2(0.05f * 2 / 3, 0.05f), 1, 0.02f);
 
     auto *stick1 = new Pong::StickPlayer();
-    stick1->Compose(float2(-0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Left, 1, game->GetInputDevice());
+    stick1->Construct(float2(-0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Left, 1, game->GetInputDevice());
     auto *stick2 = new Pong::StickAI();
-    stick2->Compose(float2(0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Right, 1, ball);
+    stick2->Construct(float2(0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Right, 1, ball);
 
     auto *wallUp = new Pong::Wall();
-    wallUp->Compose(float2(0, 2), float2(2, 1));
+    wallUp->Construct(float2(0, 2), float2(2, 1));
     auto *wallDown = new Pong::Wall();
-    wallDown->Compose(float2(0, -2), float2(2, 1));
+    wallDown->Construct(float2(0, -2), float2(2, 1));
     auto *wallLeft = new Pong::Wall();
-    wallLeft->Compose(float2(-2.1f, 0), float2(1, 2));
+    wallLeft->Construct(float2(-2.1f, 0), float2(1, 2));
     auto *wallRight = new Pong::Wall();
-    wallRight->Compose(float2(2.1f, 0), float2(1, 2));
+    wallRight->Construct(float2(2.1f, 0), float2(1, 2));
 
     auto *counter = new Pong::Counter();
-    counter->Compose(wallLeft, wallRight);
+    counter->Construct(wallLeft, wallRight);
 
     auto *textRenderer = new Engine::Render::TextRenderer();
 //
-    textRenderer->Compose(float2(0.5f, 0.1f), 80.f, float4(1.f, 1.f, 1.f, 1.f));
+    textRenderer->Construct(float2(0.5f, 0.1f), 80.f, float4(1.f, 1.f, 1.f, 1.f));
     counter->ScoreChangedEvent.AddRaw(textRenderer, &Engine::Render::TextRenderer::SetText);
 
     auto *background = new Engine::Render::BackgroundRenderer();
-    background->Compose(float2(0.f, 0.f), float2(1.f, 1.f));
+    background->Construct(float2(0.f, 0.f), float2(1.f, 1.f));
 
-    game->Compose(L"Game", 0.01f);
+    game->Construct(L"Game", 0.01f);
 
     game->GetRenderPipeline()->Add(background);
     game->GetRenderPipeline()->Add(counter);

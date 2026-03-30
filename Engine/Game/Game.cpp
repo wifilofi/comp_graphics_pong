@@ -9,12 +9,12 @@ Game *Game::Instance()
     return instance;
 }
 
-void Game::Compose(const char16 *pName, float fixedDelta) const
+void Game::Construct(const char16 *pName, float fixedDelta) const
 {
     constexpr Point size = {750, 500};
-    window_->Compose(pName, size);
+    window_->Construct(pName, size);
     inputDevice_->Compose(window_->GetHandlerWindow());
-    pipeline_->Compose(window_->GetHandlerWindow(), size);
+    pipeline_->Construct(window_->GetHandlerWindow(), size);
     fixedUpdate_->Compose(fixedDelta);
     fixedUpdate_->Add(physicsMove_);
     fixedUpdate_->Add(physicsCollide_);

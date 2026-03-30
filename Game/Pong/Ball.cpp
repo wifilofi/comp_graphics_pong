@@ -10,9 +10,9 @@
 #include "../../Engine/Render/ShaderData.h"
 using namespace Pong;
 
-void Ball::Compose(const float2 &center, const float2 &size, float startSpeed, float speedIncrease)
+void Ball::Construct(const float2 &center, const float2 &size, float startSpeed, float speedIncrease)
 {
-    sprite_.Compose(center, size);
+    sprite_.Construct(center, size);
     startSpeed_ = startSpeed;
     speedIncrease_ = speedIncrease;
     velocity_ = float2(startSpeed, 0);
@@ -20,9 +20,9 @@ void Ball::Compose(const float2 &center, const float2 &size, float startSpeed, f
     startPosition_ = float3(center);
 }
 
-void Ball::Compose(Engine::Render::Pipeline *pPipeline)
+void Ball::Construct(Engine::Render::Pipeline *pPipeline)
 {
-    sprite_.Compose(pPipeline);
+    sprite_.Construct(pPipeline);
 
     D3D11_BUFFER_DESC bufferDescriptor;
     bufferDescriptor.Usage = D3D11_USAGE_DYNAMIC;

@@ -9,13 +9,13 @@
 
 namespace Pong
 {
-    class Ball final : public Engine::Render::Able, public Engine::Update::FixedAble,
+    class Ball final : public Engine::Render::Renderer, public Engine::Update::FixedAble,
                        public Engine::Physics::CollideAble, public Engine::Physics::MoveAble
     {
     public:
-        void Compose(const float2 &center, const float2 &size, float startSpeed, float speedIncrease);
+        void Construct(const float2 &center, const float2 &size, float startSpeed, float speedIncrease);
 
-        void Compose(Engine::Render::Pipeline *pPipeline) override;
+        void Construct(Engine::Render::Pipeline *pPipeline) override;
 
         void FixedUpdate() override;
 

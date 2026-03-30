@@ -4,13 +4,13 @@
 
 using namespace Engine::Render;
 
-void Window::Compose(const char16* pName, const Point& size)
+void Window::Construct(const char16* pName, const Point& size)
 {
     pName_ = pName;
     size_ = size;
     pHandlerInstance_ = GetModuleHandle(nullptr);
-    ComposeWindowClass();
-    ComposeHandlerWindow();
+    ConstructWindowClass();
+    ConstructHandlerWindow();
     Show();
 }
 
@@ -33,7 +33,7 @@ void Window::Destroy() const
     UnregisterClass(pName_, pHandlerInstance_);
 }
 
-void Window::ComposeWindowClass()
+void Window::ConstructWindowClass()
 {
     windowClassEx_.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     windowClassEx_.lpfnWndProc = WindowProcedure;
@@ -50,7 +50,7 @@ void Window::ComposeWindowClass()
     RegisterClassEx(&windowClassEx_);
 }
 
-void Window::ComposeHandlerWindow()
+void Window::ConstructHandlerWindow()
 {
     Rect windowRectangle = {0, 0, size_.x, size_.y};
     AdjustWindowRect(&windowRectangle, WS_OVERLAPPEDWINDOW, FALSE);

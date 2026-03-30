@@ -5,7 +5,7 @@
 
 using namespace Engine::Render;
 
-void Pipeline::Compose(PHandlerWindow pHandlerWindow, const Point& size)
+void Pipeline::Construct(PHandlerWindow pHandlerWindow, const Point& size)
 {
     hwnd_ = pHandlerWindow;
     size_ = size;
@@ -16,9 +16,9 @@ void Pipeline::Compose(PHandlerWindow pHandlerWindow, const Point& size)
     viewport_.TopLeftY = 0;
     viewport_.MinDepth = 0;
     viewport_.MaxDepth = 1.0f;
-    ComposeDeviceAndSwapChain(pHandlerWindow);
-    ComposeRenderTargetView();
-    ComposeBlendState();
+    ConstructDeviceAndSwapChain(pHandlerWindow);
+    ConstructRenderTargetView();
+    ConstructBlendState();
 }
 void Pipeline::Render(float delta) const
 {
@@ -69,7 +69,7 @@ void Pipeline::Resize(int newWidth, int newHeight)
 
     pSwapChain_->ResizeBuffers(0, newWidth, newHeight, DXGI_FORMAT_UNKNOWN, 0);
 
-    ComposeRenderTargetView();
+    ConstructRenderTargetView();
 
     const float gameAspect = static_cast<float>(gameSize_.x) / static_cast<float>(gameSize_.y);
     const float winAspect  = static_cast<float>(newWidth) / static_cast<float>(newHeight);
@@ -99,13 +99,13 @@ void Pipeline::Destroy() const
     pDevice_->Release();
 }
 
-void Pipeline::Add(Able* pRenderAble)
+void Pipeline::Add(Renderer* pRenderAble)
 {
     renderAbles_.push_back(pRenderAble);
-    pRenderAble->Compose(this);
+    pRenderAble->Construct(this);
 }
 
-void Pipeline::ComposeDeviceAndSwapChain(PHandlerWindow pHandlerWindow)
+void Pipeline::ConstructDeviceAndSwapChain(PHandlerWindow pHandlerWindow)
 {
     constexpr D3D_FEATURE_LEVEL featureLevel[] = {D3D_FEATURE_LEVEL_11_1};
 
@@ -132,7 +132,7 @@ void Pipeline::ComposeDeviceAndSwapChain(PHandlerWindow pHandlerWindow)
         &pSwapChain_, &pDevice_, nullptr, &pDeviceContext_);
 }
 
-void Pipeline::ComposeBlendState()
+void Pipeline::ConstructBlendState()
 {
     D3D11_BLEND_DESC blendDescriptor = {};
     blendDescriptor.RenderTarget[0].BlendEnable           = TRUE;
@@ -146,7 +146,7 @@ void Pipeline::ComposeBlendState()
     pDevice_->CreateBlendState(&blendDescriptor, &pBlendState_);
 }
 
-void Pipeline::ComposeRenderTargetView()
+void Pipeline::ConstructRenderTargetView()
 {
     ID3D11Texture2D* backgroundTexture;
     pSwapChain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backgroundTexture));

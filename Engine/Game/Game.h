@@ -12,7 +12,7 @@ class Game final
 public:
     static Game* Instance();
 
-    void Compose(const char16* pName, float fixedDelta) const;
+    void Construct(const char16* pName, float fixedDelta) const;
     void Run();
     void Destroy() const;
 

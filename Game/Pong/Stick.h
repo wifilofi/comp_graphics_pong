@@ -16,12 +16,12 @@ namespace Pong
         Right
     };
 
-    class Stick : public Engine::Render::Able, public Engine::Update::FixedAble,
+    class Stick : public Engine::Render::Renderer, public Engine::Update::FixedAble,
                   public Engine::Physics::CollideAble, public Engine::Physics::MoveAble
     {
     public:
-        void Compose(const float2& center, const float2& size, Side side, float speed);
-        void Compose(Engine::Render::Pipeline* pPipeline) override;
+        void Construct(const float2& center, const float2& size, Side side, float speed);
+        void Construct(Engine::Render::Pipeline* pPipeline) override;
         void Render(float delta) override;
         DXBox& GetBoundingBox() override { return boundingBox_; }
         float2& GetVelocity() override { return velocity_; }
