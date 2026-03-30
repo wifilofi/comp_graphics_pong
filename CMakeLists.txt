@@ -63,6 +63,8 @@ add_executable(${PROJECT_NAME} WIN32
         Game/Pong/Stick.cpp
         Game/Pong/Counter.cpp
         Game/Pong/StickAI.cpp
+        Game/Pong/BackgroundRenderer.h
+        Game/Pong/BackgroundRenderer.cpp
         Game/Pong/TextRenderer.h
         Game/Pong/TextRenderer.cpp
         pch.h)

@@ -1,6 +1,7 @@
 #include <windows.h>
 
 #include "Engine/Game/Game.h"
+#include "Game/Pong/BackgroundRenderer.h"
 #include "Game/Pong/Ball.h"
 #include "Game/Pong/Counter.h"
 #include "Game/Pong/TextRenderer.h"
@@ -37,8 +38,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     textRenderer->Compose(float2(0.5f, 0.1f), 80.f, float4(1.f, 1.f, 1.f, 1.f));
     counter->ScoreChangedEvent.AddRaw(textRenderer, &Pong::TextRenderer::SetText);
 
+    auto *background = new Pong::BackgroundRenderer();
+    background->Compose(float2(0.f, 0.f), float2(1.f, 1.f));
+
     game->Compose(L"Game", 0.01f);
 
+    game->GetRenderPipeline()->Add(background);
     game->GetRenderPipeline()->Add(counter);
     game->GetRenderPipeline()->Add(textRenderer);
     game->GetRenderPipeline()->Add(stick1);
