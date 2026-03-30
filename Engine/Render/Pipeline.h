@@ -23,6 +23,7 @@ namespace Engine
             DXDevice* GetDevice() const { return pDevice_.Get(); }
             DXDeviceContext* GetDeviceContext() const { return pDeviceContext_; }
             PHandlerWindow GetWindow() const { return hwnd_; }
+            const DXViewport& GetViewport() const { return viewport_; }
 
         private:
             void ComposeDeviceAndSwapChain(PHandlerWindow pHandlerWindow);

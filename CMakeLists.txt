@@ -63,6 +63,8 @@ add_executable(${PROJECT_NAME} WIN32
         Game/Pong/Stick.cpp
         Game/Pong/Counter.cpp
         Game/Pong/StickAI.cpp
+        Game/Pong/TextRenderer.h
+        Game/Pong/TextRenderer.cpp
         pch.h)
 
 target_sources(${PROJECT_NAME}
@@ -148,4 +150,9 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/Engine/Shaders $<TARGET_FILE_DIR:${PROJECT_NAME}>/Shaders
+    )
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/Game/Fonts $<TARGET_FILE_DIR:${PROJECT_NAME}>/Fonts
     )

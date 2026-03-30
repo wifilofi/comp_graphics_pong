@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Wall.h"
 #include "../../Engine/Render/Able.h"
+#include <string>
 
 namespace Pong
 {
@@ -12,6 +13,8 @@ namespace Pong
         void Compose(Engine::Render::Pipeline *pPipeline) override;
 
         void Render(float delta) override;
+
+        Lib::MulticastDelegate<std::wstring> ScoreChangedEvent;
 
     private:
         void OnCollidedEvent(bool _, int32 n);

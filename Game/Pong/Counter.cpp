@@ -24,9 +24,11 @@ void Counter::OnCollidedEvent(bool _, int32 n)
     if (n == 1) points1++;
     else points2++;
 
+    const std::wstring score = std::to_wstring(points1) + L" : " + std::to_wstring(points2);
+    ScoreChangedEvent.Broadcast(score);
+
     if (pPipeline_)
     {
-        std::wstring title = L"Pong - " + std::to_wstring(points1) + L" : " + std::to_wstring(points2);
-        SetWindowText(pPipeline_->GetWindow(), title.c_str());
+        SetWindowText(pPipeline_->GetWindow(), (L"Pong - " + score).c_str());
     }
 }

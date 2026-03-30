@@ -3,6 +3,7 @@
 #include "Engine/Game/Game.h"
 #include "Game/Pong/Ball.h"
 #include "Game/Pong/Counter.h"
+#include "Game/Pong/TextRenderer.h"
 #include "Game/Pong/StickAI.h"
 #include "Game/Pong/StickPlayer.h"
 #include "Game/Pong/Wall.h"
@@ -31,9 +32,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     auto *counter = new Pong::Counter();
     counter->Compose(wallLeft, wallRight);
 
+    auto *textRenderer = new Pong::TextRenderer();
+    counter->ScoreChangedEvent.AddRaw(textRenderer, &Pong::TextRenderer::SetText);
+
     game->Compose(L"Game", 0.01f);
 
     game->GetRenderPipeline()->Add(counter);
+    game->GetRenderPipeline()->Add(textRenderer);
     game->GetRenderPipeline()->Add(stick1);
     game->GetRenderPipeline()->Add(stick2);
     game->GetRenderPipeline()->Add(ball);
