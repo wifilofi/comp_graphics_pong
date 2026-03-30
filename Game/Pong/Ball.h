@@ -13,7 +13,7 @@ namespace Pong
                        public Engine::Physics::CollideAble, public Engine::Physics::MoveAble
     {
     public:
-        void Construct(const float2 &center, const float2 &size, float startSpeed, float speedIncrease);
+        void Construct(const float2 &center, const float2 &size, float startSpeed, float speedIncrease, float4 color = float4(1, 1, 1, 1));
 
         void Construct(Engine::Render::Pipeline *pPipeline) override;
 
@@ -37,5 +37,6 @@ namespace Pong
         Lib::Interpolated<float3> position_;
         float startSpeed_ = 0;
         float speedIncrease_ = 0;
+        float4 color_ = float4(1, 1, 1, 1);
     };
 }

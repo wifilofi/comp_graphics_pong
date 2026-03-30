@@ -2,9 +2,9 @@
 
 using namespace Pong;
 
-void StickAI::Construct(const float2& center, const float2& size, Side side, float speed, Ball* pBall)
+void StickAI::Construct(const float2& center, const float2& size, Side side, float speed, Ball* pBall, float4 color)
 {
-    Stick::Construct(center, size, side, speed);
+    Stick::Construct(center, size, side, speed, color);
     pBall_ = pBall;
 }
 

@@ -10,11 +10,12 @@
 #include "../../Engine/Render/ShaderData.h"
 using namespace Pong;
 
-void Ball::Construct(const float2 &center, const float2 &size, float startSpeed, float speedIncrease)
+void Ball::Construct(const float2 &center, const float2 &size, float startSpeed, float speedIncrease, float4 color)
 {
     sprite_.Construct(center, size);
     startSpeed_ = startSpeed;
     speedIncrease_ = speedIncrease;
+    color_ = color;
     velocity_ = float2(startSpeed, 0);
     boundingBox_ = DXBox(float3(center), float3(size));
     startPosition_ = float3(center);
@@ -44,7 +45,7 @@ void Ball::Render(float alpha)
 {
     const float3 offset = position_.Get(alpha) - startPosition_;
     const float4 size(boundingBox_.Extents.x, boundingBox_.Extents.y, 0, 0);
-    const Engine::Render::ShaderData additionData{float4(offset.x, offset.y, offset.z, 1), float4(1), size};
+    const Engine::Render::ShaderData additionData{float4(offset.x, offset.y, offset.z, 1), color_, size};
     D3D11_MAPPED_SUBRESOURCE subresource = {};
     sprite_.GetPipeline()->GetDeviceContext()->Map(
         pAdditionDataBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource);

@@ -20,7 +20,7 @@ namespace Pong
                   public Engine::Physics::CollideAble, public Engine::Physics::MoveAble
     {
     public:
-        void Construct(const float2& center, const float2& size, Side side, float speed);
+        void Construct(const float2& center, const float2& size, Side side, float speed, float4 color = float4(1, 1, 1, 1));
         void Construct(Engine::Render::Pipeline* pPipeline) override;
         void Render(float delta) override;
         DXBox& GetBoundingBox() override { return boundingBox_; }
@@ -36,5 +36,6 @@ namespace Pong
         Side hand_ = Side::None;
         float speed_ = 0;
         float3 startPosition_;
+        float4 color_ = float4(1, 1, 1, 1);
     };
 }

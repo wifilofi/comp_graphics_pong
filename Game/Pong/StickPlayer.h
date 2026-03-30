@@ -10,7 +10,7 @@ namespace Pong
     {
     public:
         void Construct(const float2& center, const float2& size, Side side, float speed,
-            Engine::Input::Device* pInputDevice);
+            Engine::Input::Device* pInputDevice, float4 color = float4(1, 1, 1, 1));
 
         void FixedUpdate() override;
 

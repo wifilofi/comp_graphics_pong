@@ -38,7 +38,9 @@ float4 PSMain( PS_IN input ) : SV_Target
     float4 col = float4(0.027, 0.016, 0.161, 1);
 
     if (pixel == 1.0)
+    {
         col = float4(0.094, 0.086, 0.2, 1);
+    }
 
     return col;
 }

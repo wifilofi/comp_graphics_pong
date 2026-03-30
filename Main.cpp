@@ -13,13 +13,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 {
 //
     auto *game = Game::Instance();
+    constexpr float4 gameColor = float4(0.561f, 0.984f, 0.91f, 1.0f);
+
     auto *ball = new Pong::Ball();
-    ball->Construct(float2(0, 0), float2(0.05f * 2 / 3, 0.05f), 1, 0.02f);
+    ball->Construct(float2(0, 0), float2(0.05f * 2 / 3, 0.05f), 1, 0.02f, gameColor);
 
     auto *stick1 = new Pong::StickPlayer();
-    stick1->Construct(float2(-0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Left, 1, game->GetInputDevice());
+    stick1->Construct(float2(-0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Left, 1, game->GetInputDevice(), gameColor);
     auto *stick2 = new Pong::StickAI();
-    stick2->Construct(float2(0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Right, 1, ball);
+    stick2->Construct(float2(0.9f, 0), float2(0.02f, 0.3f), Pong::Side::Right, 1, ball, gameColor);
 
     auto *wallUp = new Pong::Wall();
     wallUp->Construct(float2(0, 2), float2(2, 1));
@@ -35,7 +37,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
     auto *textRenderer = new Engine::Render::TextRenderer();
 
-    textRenderer->Construct(float2(0.5f, 0.1f), 80.f, float4(1.f, 1.f, 1.f, 1.f));
+    textRenderer->Construct(float2(0.5f, 0.1f), 80.f, gameColor);
     counter->ScoreChangedEvent.AddRaw(textRenderer, &Engine::Render::TextRenderer::SetText);
 
     auto *background = new Engine::Render::BackgroundRenderer();
