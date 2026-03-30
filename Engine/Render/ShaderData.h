@@ -2,7 +2,7 @@
 
 #include "../Lib/Types.h"
 
-namespace Pong
+namespace Engine::Render
 {
     struct ShaderData
     {
