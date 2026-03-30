@@ -5,12 +5,14 @@ using namespace Engine;
 
 Game *Game::Instance()
 {
+
     static auto *instance = new Game();
     return instance;
 }
 
 void Game::Construct(const char16 *pName, float fixedDelta) const
 {
+    //be
     constexpr Point size = {750, 500};
     window_->Construct(pName, size);
     inputDevice_->Compose(window_->GetHandlerWindow());

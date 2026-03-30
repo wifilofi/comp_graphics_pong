@@ -25,6 +25,13 @@ namespace Engine
             PHandlerWindow GetWindow() const { return hwnd_; }
             const DXViewport& GetViewport() const { return viewport_; }
 
+            struct FrameData
+            {
+                float  time;
+                float  _pad;
+                float2 resolution;
+            };
+
         private:
             void ConstructDeviceAndSwapChain(PHandlerWindow pHandlerWindow);
             void ConstructRenderTargetView();
@@ -38,6 +45,8 @@ namespace Engine
             DXSwapChain* pSwapChain_ = nullptr;
             DXRenderTargetView* pRenderTargetView_ = nullptr;
             DXBlendState* pBlendState_ = nullptr;
+            DXBuffer* pFrameDataBuffer_ = nullptr;
+            mutable float time_ = 0.f;
             std::vector<Renderer*> renderAbles_{};
             PHandlerWindow hwnd_ = nullptr;
         };

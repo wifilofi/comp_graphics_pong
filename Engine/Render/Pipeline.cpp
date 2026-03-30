@@ -19,6 +19,13 @@ void Pipeline::Construct(PHandlerWindow pHandlerWindow, const Point& size)
     ConstructDeviceAndSwapChain(pHandlerWindow);
     ConstructRenderTargetView();
     ConstructBlendState();
+
+    D3D11_BUFFER_DESC frameDesc = {};
+    frameDesc.Usage          = D3D11_USAGE_DYNAMIC;
+    frameDesc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+    frameDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    frameDesc.ByteWidth      = sizeof(FrameData);
+    pDevice_->CreateBuffer(&frameDesc, nullptr, &pFrameDataBuffer_);
 }
 void Pipeline::Render(float delta) const
 {
@@ -44,6 +51,17 @@ void Pipeline::Render(float delta) const
         pContext1->ClearView(pRenderTargetView_, gameColor, &rect, 1);
         pContext1->Release();
     }
+
+    time_ += delta;
+
+    D3D11_MAPPED_SUBRESOURCE frameSub = {};
+    pDeviceContext_->Map(pFrameDataBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &frameSub);
+    auto* pFrame = static_cast<FrameData*>(frameSub.pData);
+    pFrame->time       = time_;
+    pFrame->resolution = float2(viewport_.Width, viewport_.Height);
+    pDeviceContext_->Unmap(pFrameDataBuffer_, 0);
+    pDeviceContext_->VSSetConstantBuffers(1, 1, &pFrameDataBuffer_);
+    pDeviceContext_->PSSetConstantBuffers(1, 1, &pFrameDataBuffer_);
 
     constexpr float blendFactor[] = {0.0f, 0.0f, 0.0f, 0.0f};
     pDeviceContext_->OMSetBlendState(pBlendState_, blendFactor, 0xFFFFFFFF);

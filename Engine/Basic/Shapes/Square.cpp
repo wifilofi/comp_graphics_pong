@@ -34,8 +34,8 @@ void Square::Construct(Engine::Render::Pipeline* pPipeline)
 {
     Rendering::Construct(pPipeline);
 //
-    CreateVertexShader(L"././Shaders/SDFSmooth.hlsl", nullptr, nullptr);
-    CreatePixelShader(L"././Shaders/SDFSmooth.hlsl", nullptr, nullptr);
+    CreateVertexShader(L"././Shaders/SDFSmooth.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE);
+    CreatePixelShader(L"././Shaders/SDFSmooth.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE);
     CreateLayout();
     CreateVertexBuffer(4 * 2);
     CreateIndexBuffer(3 * 2);

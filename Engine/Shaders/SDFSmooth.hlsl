@@ -1,14 +1,4 @@
-struct VS_IN
-{
-    float4 pos : POSITION0;
-    float4 col : COLOR0; // Assuming UVs are passed here as (u, v, 0, 0)
-};
-
-struct PS_IN
-{
-    float4 pos : SV_POSITION;
-    float2 uv  : TEXCOORD0;
-};
+#include "Common.hlsli"
 
 struct Addition
 {
@@ -26,18 +16,12 @@ PS_IN VSMain( VS_IN input )
 {
     PS_IN output;
 
-    // Apply offset from constant buffer
     output.pos = float4(input.pos.xyz + AdditionData.offset.xyz, 1);
-    // Pass through the UV coordinates
     output.uv  = input.col.xy;
 
     return output;
 }
 
-// Simple Rounded Rectangle SDF function
-// p: current position (centered at 0,0)
-// b: half-extents (width/2, height/2)
-// r: radius of the corners
 float sdRoundedBox(float2 p, float2 b, float r)
 {
     float2 q = abs(p) - b + r;

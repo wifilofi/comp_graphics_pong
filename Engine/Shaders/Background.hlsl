@@ -1,14 +1,4 @@
-struct VS_IN
-{
-    float4 pos : POSITION0;
-    float4 col : COLOR0;
-};
-
-struct PS_IN
-{
-    float4 pos : SV_POSITION;
-    float2 uv  : TEXCOORD0;
-};
+#include "Common.hlsli"
 
 struct Addition
 {
@@ -33,5 +23,5 @@ PS_IN VSMain( VS_IN input )
 
 float4 PSMain( PS_IN input ) : SV_Target
 {
-    return float4(input.uv, 0, 1);
+    return float4(input.uv, time, 1);
 }

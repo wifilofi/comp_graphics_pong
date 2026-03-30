@@ -34,7 +34,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     counter->Construct(wallLeft, wallRight);
 
     auto *textRenderer = new Engine::Render::TextRenderer();
-//
+
     textRenderer->Construct(float2(0.5f, 0.1f), 80.f, float4(1.f, 1.f, 1.f, 1.f));
     counter->ScoreChangedEvent.AddRaw(textRenderer, &Engine::Render::TextRenderer::SetText);
 

@@ -1,14 +1,4 @@
-struct VS_IN
-{
-    float4 pos : POSITION0;
-    float4 col : COLOR0;
-};
-
-struct PS_IN
-{
-    float4 pos : SV_POSITION;
-    float2 uv  : TEXCOORD0;
-};
+#include "Common.hlsli"
 
 struct Addition
 {
