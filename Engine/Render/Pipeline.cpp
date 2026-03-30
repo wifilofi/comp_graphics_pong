@@ -48,7 +48,7 @@ void Pipeline::Render(float delta) const
     pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, pDepthStencilView_);
     pDeviceContext_->ClearDepthStencilView(pDepthStencilView_, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    // Black for the letterbox/pillarbox bars
+    // pillarbox
     constexpr float black[] = {0.0f, 0.0f, 0.0f, 1.0f};
     pDeviceContext_->ClearRenderTargetView(pRenderTargetView_, black);
 

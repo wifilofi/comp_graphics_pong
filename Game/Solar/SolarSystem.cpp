@@ -28,23 +28,23 @@ void SolarSystem::BuildBodies()
 {
     using P = SolarBody::Params;
 
-    // Sun
+    // sun
     sun_.Construct(pPipeline_, P{ShapeType::Sphere, {1.0f,0.9f,0.1f,1}, 3.f, 0, 0, 0, 0.003f});
 
-    // Inner planets
+    // litl planet
     mercury_.Construct(pPipeline_, P{ShapeType::Sphere,{0.6f,0.6f,0.6f,1}, 0.4f, 5.f,  0.020f, 0.10f, 0.008f}, &sun_);
     venus_  .Construct(pPipeline_, P{ShapeType::Box,   {0.9f,0.8f,0.5f,1}, 0.9f, 8.f,  0.013f, 0.05f, 0.004f}, &sun_);
 
-    // Earth + Moon
+    // earth + moon
     earth_  .Construct(pPipeline_, P{ShapeType::Sphere,{0.2f,0.5f,1.0f,1}, 1.0f, 12.f, 0.010f, 0.03f, 0.007f}, &sun_);
     moon_   .Construct(pPipeline_, P{ShapeType::Sphere,{0.7f,0.7f,0.7f,1}, 0.3f, 2.2f, 0.050f, 0.08f, 0.005f}, &earth_);
 
-    // Mars + moons
+    // mars + moons
     mars_   .Construct(pPipeline_, P{ShapeType::Sphere,{0.8f,0.3f,0.1f,1}, 0.7f, 17.f, 0.008f, 0.02f, 0.009f}, &sun_);
     phobos_ .Construct(pPipeline_, P{ShapeType::Box,   {0.5f,0.4f,0.3f,1}, 0.2f, 1.5f, 0.080f, 0.00f, 0.012f}, &mars_);
     deimos_ .Construct(pPipeline_, P{ShapeType::Sphere,{0.6f,0.5f,0.4f,1}, 0.15f,2.5f, 0.040f, 0.04f, 0.010f}, &mars_);
 
-    // Jupiter + moons
+    // jupiter + moons
     jupiter_.Construct(pPipeline_, P{ShapeType::Sphere,{0.9f,0.7f,0.4f,1}, 2.0f, 25.f, 0.005f, 0.01f, 0.006f}, &sun_);
     io_     .Construct(pPipeline_, P{ShapeType::Box,   {0.9f,0.8f,0.2f,1}, 0.4f, 3.5f, 0.030f, 0.06f, 0.011f}, &jupiter_);
     europa_ .Construct(pPipeline_, P{ShapeType::Sphere,{0.7f,0.8f,0.9f,1}, 0.35f,5.0f, 0.022f, 0.03f, 0.008f}, &jupiter_);

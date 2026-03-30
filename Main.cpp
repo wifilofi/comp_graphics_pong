@@ -5,7 +5,6 @@
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-    //
     auto *game = Game::Instance();
     game->Construct(L"Solar System", 0.01f);
 
