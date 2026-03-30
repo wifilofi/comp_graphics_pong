@@ -152,7 +152,8 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     ${CMAKE_SOURCE_DIR}/Engine/Shaders $<TARGET_FILE_DIR:${PROJECT_NAME}>/Shaders
     )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+add_custom_target(copy_fonts ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/Game/Fonts $<TARGET_FILE_DIR:${PROJECT_NAME}>/Fonts
-    )
+    DEPENDS ${PROJECT_NAME}
+)

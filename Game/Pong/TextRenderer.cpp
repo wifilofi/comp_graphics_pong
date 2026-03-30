@@ -18,7 +18,6 @@ void TextRenderer::Compose(Engine::Render::Pipeline *pPipeline)
     try
     {
         spriteFont_ = std::make_unique<DirectX::SpriteFont>(pPipeline->GetDevice(), L"Fonts/teko.spritefont");
-        scale_ = fontSize_ / spriteFont_->GetLineSpacing();
     }
     catch (...) {}
 }
@@ -29,8 +28,8 @@ void TextRenderer::Render(float delta)
         return;
 
     const DirectX::XMVECTOR measured = spriteFont_->MeasureString(text_.c_str());
-    const float textWidth  = DirectX::XMVectorGetX(measured) * scale_;
-    const float textHeight = DirectX::XMVectorGetY(measured) * scale_;
+    const float textWidth  = DirectX::XMVectorGetX(measured);
+    const float textHeight = DirectX::XMVectorGetY(measured);
 
     const DXViewport& vp = pPipeline_->GetViewport();
     DirectX::XMFLOAT2 pos{};
@@ -39,9 +38,8 @@ void TextRenderer::Render(float delta)
 
     const DirectX::XMVECTOR colorVec = DirectX::XMLoadFloat4(&color_);
 
-    spriteBatch_->Begin(DirectX::SpriteSortMode_Deferred, nullptr, commonStates_->LinearClamp());
-    spriteFont_->DrawString(spriteBatch_.get(), text_.c_str(), pos, colorVec,
-                            0.f, DirectX::XMFLOAT2(0.f, 0.f), scale_);
+    spriteBatch_->Begin(DirectX::SpriteSortMode_Deferred, nullptr, commonStates_->PointClamp());
+    spriteFont_->DrawString(spriteBatch_.get(), text_.c_str(), pos, colorVec);
     spriteBatch_->End();
 }
 
