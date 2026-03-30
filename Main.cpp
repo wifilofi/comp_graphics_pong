@@ -4,7 +4,7 @@
 #include "Engine/Render/BackgroundRenderer.h"
 #include "Game/Pong/Ball.h"
 #include "Game/Pong/Counter.h"
-#include "Game/Pong/TextRenderer.h"
+#include "Engine/Render/TextRenderer.h"
 #include "Game/Pong/StickAI.h"
 #include "Game/Pong/StickPlayer.h"
 #include "Game/Pong/Wall.h"
@@ -33,10 +33,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     auto *counter = new Pong::Counter();
     counter->Compose(wallLeft, wallRight);
 
-    auto *textRenderer = new Pong::TextRenderer();
+    auto *textRenderer = new Engine::Render::TextRenderer();
 //
     textRenderer->Compose(float2(0.5f, 0.1f), 80.f, float4(1.f, 1.f, 1.f, 1.f));
-    counter->ScoreChangedEvent.AddRaw(textRenderer, &Pong::TextRenderer::SetText);
+    counter->ScoreChangedEvent.AddRaw(textRenderer, &Engine::Render::TextRenderer::SetText);
 
     auto *background = new Engine::Render::BackgroundRenderer();
     background->Compose(float2(0.f, 0.f), float2(1.f, 1.f));

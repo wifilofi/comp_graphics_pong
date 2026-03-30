@@ -1,13 +1,13 @@
 #pragma once
-#include "../../Engine/Render/Able.h"
-#include "../../Engine/Lib/Types.h"
+#include "Able.h"
+#include "../Lib/Types.h"
 #include <CommonStates.h>
 #include <SpriteBatch.h>
 #include <SpriteFont.h>
 #include <memory>
 #include <string>
 
-namespace Pong
+namespace Engine::Render
 {
     class TextRenderer : public Engine::Render::Able
     {

@@ -65,8 +65,8 @@ add_executable(${PROJECT_NAME} WIN32
         Game/Pong/StickAI.cpp
         Engine/Render/BackgroundRenderer.h
         Engine/Render/BackgroundRenderer.cpp
-        Game/Pong/TextRenderer.h
-        Game/Pong/TextRenderer.cpp
+        Engine/Render/TextRenderer.h
+        Engine/Render/TextRenderer.cpp
         pch.h
         Engine/Render/BackgroundRenderer.cpp
         Engine/Render/BackgroundRenderer.cpp

@@ -1,7 +1,7 @@
 #include "TextRenderer.h"
-#include "../../Engine/Render/Pipeline.h"
+#include "Pipeline.h"
 
-using namespace Pong;
+using namespace Engine::Render;
 
 void TextRenderer::Compose(float2 position, float fontSize, float4 color)
 {
