@@ -10,7 +10,8 @@ void StickAI::Compose(const float2& center, const float2& size, Side side, float
 
 void StickAI::FixedUpdate()
 {
-    boundingBox_.Center.y = Clamp(boundingBox_.Center.y, 0.8f, -0.8f);
+    const float limit = 1.0f - static_cast<float>(boundingBox_.Extents.y);
+    boundingBox_.Center.y = Clamp(boundingBox_.Center.y, limit, -limit);
     velocity_ = float2();
 
     const auto difference = pBall_->GetBoundingBox().Center.y - boundingBox_.Center.y;

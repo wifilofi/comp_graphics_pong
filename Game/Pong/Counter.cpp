@@ -13,6 +13,7 @@ void Counter::Compose(Wall *pLeft, Wall *pRight)
 void Counter::Compose(Engine::Render::Pipeline *pPipeline)
 {
     pPipeline_ = pPipeline;
+    ScoreChangedEvent.Broadcast(std::to_wstring(points1) + L" : " + std::to_wstring(points2));
 }
 
 void Counter::Render(float delta)
