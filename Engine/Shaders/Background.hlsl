@@ -24,8 +24,7 @@ PS_IN VSMain( VS_IN input )
 float4 PSMain( PS_IN input ) : SV_Target
 {
     float timeSlowed = time * 0.05 + 100;
-    float2 fragCoord = input.uv * resolution;
-    float2 uv = fragCoord - resolution / 2.0;
+    float2 uv = input.uv * resolution - resolution / 2.0;
     uv = 2.0 * uv / resolution.y;
 
     uv = uv / (1.0 + length(uv));
