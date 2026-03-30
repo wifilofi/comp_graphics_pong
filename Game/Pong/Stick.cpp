@@ -1,5 +1,5 @@
 #include "Stick.h"
-#include "ShaderData.h"
+#include "../../Engine/Render/ShaderData.h"
 #include "directxmath.h"
 
 using namespace Pong;
@@ -23,7 +23,7 @@ void Stick::Compose(Engine::Render::Pipeline* pPipeline)
     bufferDescriptor.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bufferDescriptor.MiscFlags = 0;
     bufferDescriptor.StructureByteStride = 0;
-    bufferDescriptor.ByteWidth = sizeof(AdditionData);
+    bufferDescriptor.ByteWidth = sizeof(ShaderData);
 
     sprite_.GetPipeline()->GetDevice()->CreateBuffer(&bufferDescriptor, nullptr, &pAdditionDataBuffer_);
 }
@@ -32,12 +32,12 @@ void Stick::Render(float delta)
 {
     const float3 offset = boundingBox_.Center - startPosition_;
     const float4 size(boundingBox_.Extents.x, boundingBox_.Extents.y, 0, 0);
-    const AdditionData additionData{float4(offset.x, offset.y, offset.z, 1), float4(1), size};
+    const ShaderData additionData{float4(offset.x, offset.y, offset.z, 1), float4(1), size};
     D3D11_MAPPED_SUBRESOURCE subresource = {};
     sprite_.GetPipeline()->GetDeviceContext()->Map(
         pAdditionDataBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource);
     auto* pData = static_cast<float*>(subresource.pData);
-    memcpy(pData, &additionData, sizeof(AdditionData));
+    memcpy(pData, &additionData, sizeof(ShaderData));
     sprite_.GetPipeline()->GetDeviceContext()->Unmap(pAdditionDataBuffer_, 0);
     sprite_.GetPipeline()->GetDeviceContext()->VSSetConstantBuffers(0, 1, &pAdditionDataBuffer_);
     sprite_.GetPipeline()->GetDeviceContext()->PSSetConstantBuffers(0, 1, &pAdditionDataBuffer_);

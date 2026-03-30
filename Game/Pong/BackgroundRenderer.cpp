@@ -1,5 +1,5 @@
 #include "BackgroundRenderer.h"
-#include "ShaderData.h"
+#include "../../Engine/Render/ShaderData.h"
 #include "../../Engine/Basic/Components/Rendering.h"
 #include "../../Engine/Render/Pipeline.h"
 
@@ -25,13 +25,13 @@ void BackgroundRenderer::Compose(Engine::Render::Pipeline* pPipeline)
     bufferDesc.Usage          = D3D11_USAGE_DYNAMIC;
     bufferDesc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    bufferDesc.ByteWidth      = sizeof(AdditionData);
+    bufferDesc.ByteWidth      = sizeof(ShaderData);
     pPipeline_->GetDevice()->CreateBuffer(&bufferDesc, nullptr, &pAdditionDataBuffer_);
 }
 
 void BackgroundRenderer::Render(float delta)
 {
-    const AdditionData data{
+    const ShaderData data{
         float4(0.f, 0.f, 0.f, 1.f),
         float4(1.f, 1.f, 1.f, 1.f),
         float4(extents_.x, extents_.y, 0.f, 0.f)
@@ -39,7 +39,7 @@ void BackgroundRenderer::Render(float delta)
 
     D3D11_MAPPED_SUBRESOURCE sub = {};
     pPipeline_->GetDeviceContext()->Map(pAdditionDataBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub);
-    memcpy(sub.pData, &data, sizeof(AdditionData));
+    memcpy(sub.pData, &data, sizeof(ShaderData));
     pPipeline_->GetDeviceContext()->Unmap(pAdditionDataBuffer_, 0);
     pPipeline_->GetDeviceContext()->VSSetConstantBuffers(0, 1, &pAdditionDataBuffer_);
     pPipeline_->GetDeviceContext()->PSSetConstantBuffers(0, 1, &pAdditionDataBuffer_);
