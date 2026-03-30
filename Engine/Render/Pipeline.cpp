@@ -1,4 +1,5 @@
 #include "Pipeline.h"
+#include "Camera.h"
 #include <d3d11_1.h>
 
 #pragma comment(lib, "d3d11.lib")
@@ -26,11 +27,26 @@ void Pipeline::Construct(PHandlerWindow pHandlerWindow, const Point& size)
     frameDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     frameDesc.ByteWidth      = sizeof(FrameData);
     pDevice_->CreateBuffer(&frameDesc, nullptr, &pFrameDataBuffer_);
+
+    D3D11_BUFFER_DESC camDesc = {};
+    camDesc.Usage          = D3D11_USAGE_DYNAMIC;
+    camDesc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+    camDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    camDesc.ByteWidth      = sizeof(CameraData);
+    pDevice_->CreateBuffer(&camDesc, nullptr, &pCameraBuffer_);
+
+    ConstructDepthBuffer(size_.x, size_.y);
 }
+void Pipeline::SetCamera(Camera* pCamera)
+{
+    pCamera_ = pCamera;
+}
+
 void Pipeline::Render(float delta) const
 {
     pDeviceContext_->ClearState();
-    pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, nullptr);
+    pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, pDepthStencilView_);
+    pDeviceContext_->ClearDepthStencilView(pDepthStencilView_, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
     // Black for the letterbox/pillarbox bars
     constexpr float black[] = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -63,12 +79,23 @@ void Pipeline::Render(float delta) const
     pDeviceContext_->VSSetConstantBuffers(1, 1, &pFrameDataBuffer_);
     pDeviceContext_->PSSetConstantBuffers(1, 1, &pFrameDataBuffer_);
 
+    if (pCamera_)
+    {
+        D3D11_MAPPED_SUBRESOURCE camSub = {};
+        pDeviceContext_->Map(pCameraBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &camSub);
+        auto* pCam = static_cast<CameraData*>(camSub.pData);
+        pCam->view       = pCamera_->GetView().Transpose();
+        pCam->projection = pCamera_->GetProjection().Transpose();
+        pDeviceContext_->Unmap(pCameraBuffer_, 0);
+        pDeviceContext_->VSSetConstantBuffers(2, 1, &pCameraBuffer_);
+    }
+
     constexpr float blendFactor[] = {0.0f, 0.0f, 0.0f, 0.0f};
     pDeviceContext_->OMSetBlendState(pBlendState_, blendFactor, 0xFFFFFFFF);
     pDeviceContext_->RSSetViewports(1, &viewport_);
     for (auto* pRenderAble : renderAbles_)
     {
-        pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, nullptr);
+        pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, pDepthStencilView_);
         pRenderAble->Render(delta);
     }
     pSwapChain_->Present(1, 0);
@@ -85,9 +112,12 @@ void Pipeline::Resize(int newWidth, int newHeight)
     pRenderTargetView_->Release();
     pRenderTargetView_ = nullptr;
 
+    if (pDepthStencilView_) { pDepthStencilView_->Release(); pDepthStencilView_ = nullptr; }
+
     pSwapChain_->ResizeBuffers(0, newWidth, newHeight, DXGI_FORMAT_UNKNOWN, 0);
 
     ConstructRenderTargetView();
+    ConstructDepthBuffer(newWidth, newHeight);
 
     const float gameAspect = static_cast<float>(gameSize_.x) / static_cast<float>(gameSize_.y);
     const float winAspect  = static_cast<float>(newWidth) / static_cast<float>(newHeight);
@@ -115,6 +145,24 @@ void Pipeline::Destroy() const
     pSwapChain_->Release();
     pDeviceContext_->Release();
     pDevice_->Release();
+}
+
+void Pipeline::ConstructDepthBuffer(int width, int height)
+{
+    D3D11_TEXTURE2D_DESC depthDesc = {};
+    depthDesc.Width              = static_cast<UINT>(width);
+    depthDesc.Height             = static_cast<UINT>(height);
+    depthDesc.MipLevels          = 1;
+    depthDesc.ArraySize          = 1;
+    depthDesc.Format             = DXGI_FORMAT_D32_FLOAT;
+    depthDesc.SampleDesc.Count   = 1;
+    depthDesc.Usage              = D3D11_USAGE_DEFAULT;
+    depthDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
+
+    ID3D11Texture2D* pDepthTex = nullptr;
+    pDevice_->CreateTexture2D(&depthDesc, nullptr, &pDepthTex);
+    pDevice_->CreateDepthStencilView(pDepthTex, nullptr, &pDepthStencilView_);
+    pDepthTex->Release();
 }
 
 void Pipeline::Add(Renderer* pRenderAble)

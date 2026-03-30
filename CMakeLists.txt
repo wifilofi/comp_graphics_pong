@@ -75,6 +75,14 @@ add_executable(${PROJECT_NAME} WIN32
         Game/Pong/PongGameContainer.cpp
         Game/Pong/PongGameContainer.h
         Engine/Game/GameContainer.h
+        Game/Solar/SolarGameContainer.cpp
+        Engine/Render/FirstPersonCamera.cpp
+        Engine/Render/OrbitalCamera.cpp
+        Game/Solar/SolarBody.cpp
+        Game/Solar/SolarSystem.cpp
+        Engine/Basic/Components/Rendering3D.cpp
+        Engine/Basic/Shapes/Box.cpp
+        Engine/Basic/Shapes/LowPolySphere.cpp
 )
 
 target_sources(${PROJECT_NAME}

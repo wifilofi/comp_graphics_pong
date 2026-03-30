@@ -24,6 +24,7 @@ typedef LONG_PTR PInt64;
 typedef DirectX::SimpleMath::Vector2 float2;
 typedef DirectX::SimpleMath::Vector3 float3;
 typedef DirectX::SimpleMath::Vector4 float4;
+typedef DirectX::SimpleMath::Matrix  float4x4;
 
 typedef POINT Point;
 typedef RECT Rect;
@@ -49,5 +50,8 @@ typedef ID3D11VertexShader DXVertexShader;
 typedef ID3D11PixelShader DXPixelShader;
 typedef ID3D11InputLayout DXInputLayout;
 typedef ID3D11Buffer DXBuffer;
+typedef ID3D11Texture2D DXTexture2D;
+typedef ID3D11DepthStencilView DXDepthStencilView;
+typedef ID3D11DepthStencilState DXDepthStencilState;
 typedef ID3D11RasterizerState DXRasterizerState;
 typedef ID3D11BlendState DXBlendState;
