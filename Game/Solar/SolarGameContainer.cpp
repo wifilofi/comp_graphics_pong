@@ -2,12 +2,14 @@
 
 #include "../../Engine/Game/Game.h"
 #include "SolarSystem.h"
+#include "../../Engine/Render/BackgroundRenderer.h"
 
 using namespace Solar;
 
 void SolarGameContainer::Setup(Game* pGame)
 {
     auto* system = new SolarSystem();
+
     system->SetInputDevice(pGame->GetInputDevice());
 
     pGame->GetRenderPipeline()->Add(system);

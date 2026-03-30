@@ -15,7 +15,7 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     indexCount_ = static_cast<int32>(indices.size());
     auto* device = pPipeline_->GetDevice();
 
-    // Shaders
+
     DXBlob* pVSBlob = nullptr;
     DXBlob* pError  = nullptr;
     D3DCompileFromFile(L"././Shaders/Shader3D.hlsl", nullptr, nullptr,
@@ -31,7 +31,6 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     device->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(),
                               nullptr, &pPixelShader_);
 
-    // Input layout: float3 POSITION + float3 NORMAL
     const D3D11_INPUT_ELEMENT_DESC layout[] = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -41,7 +40,6 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     pVSBlob->Release();
     if (pPSBlob) pPSBlob->Release();
 
-    // Vertex buffer
     D3D11_BUFFER_DESC vbDesc = {};
     vbDesc.Usage     = D3D11_USAGE_DEFAULT;
     vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -50,7 +48,6 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     vbData.pSysMem = vertices.data();
     device->CreateBuffer(&vbDesc, &vbData, &pVertexBuffer_);
 
-    // Index buffer
     D3D11_BUFFER_DESC ibDesc = {};
     ibDesc.Usage     = D3D11_USAGE_DEFAULT;
     ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -59,7 +56,6 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     ibData.pSysMem = indices.data();
     device->CreateBuffer(&ibDesc, &ibData, &pIndexBuffer_);
 
-    // Object constant buffer (model matrix + color)
     D3D11_BUFFER_DESC obDesc = {};
     obDesc.Usage          = D3D11_USAGE_DYNAMIC;
     obDesc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
@@ -67,7 +63,6 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     obDesc.ByteWidth      = sizeof(ObjectData);
     device->CreateBuffer(&obDesc, nullptr, &pObjectBuffer_);
 
-    // Rasterizer state
     CD3D11_RASTERIZER_DESC rastDesc = {};
     rastDesc.FillMode = D3D11_FILL_SOLID;
     rastDesc.CullMode = D3D11_CULL_BACK;
@@ -79,7 +74,6 @@ void Rendering3D::Draw(const float4x4& model, const float4& color)
 {
     auto* ctx = pPipeline_->GetDeviceContext();
 
-    // Update object cbuffer
     D3D11_MAPPED_SUBRESOURCE sub = {};
     ctx->Map(pObjectBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub);
     auto* pObj    = static_cast<ObjectData*>(sub.pData);
