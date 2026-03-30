@@ -70,7 +70,12 @@ add_executable(${PROJECT_NAME} WIN32
         pch.h
         Engine/Render/BackgroundRenderer.cpp
         Engine/Render/BackgroundRenderer.cpp
-        Engine/Render/BackgroundRenderer.cpp)
+        Engine/Render/BackgroundRenderer.cpp
+        Game/Pong/PongGameContainer.cpp
+        Game/Pong/PongGameContainer.cpp
+        Game/Pong/PongGameContainer.h
+        Engine/Game/GameContainer.h
+)
 
 target_sources(${PROJECT_NAME}
     PRIVATE

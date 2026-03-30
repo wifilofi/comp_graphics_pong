@@ -12,6 +12,7 @@ using namespace Pong;
 
 void Ball::Construct(const float2 &center, const float2 &size, float startSpeed, float speedIncrease, float4 color)
 {
+
     sprite_.Construct(center, size);
     startSpeed_ = startSpeed;
     speedIncrease_ = speedIncrease;

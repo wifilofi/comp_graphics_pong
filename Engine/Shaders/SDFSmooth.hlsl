@@ -43,7 +43,7 @@ float4 PSMain( PS_IN input ) : SV_Target
     float mask = smoothstep(edgeSmoothing, -edgeSmoothing, dist);
 
     float4 finalColor = AdditionData.color * mask;
-    finalColor.a *= mask;
+    //finalColor.a *= mask;
 
     return finalColor;
 }
