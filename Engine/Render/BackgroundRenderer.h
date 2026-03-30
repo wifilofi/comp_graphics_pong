@@ -1,8 +1,8 @@
 #pragma once
-#include "../../Engine/Basic/Shapes/Square.h"
-#include "../../Engine/Lib/Types.h"
+#include "../Basic/Shapes/Square.h"
+#include "../Lib/Types.h"
 
-namespace Pong
+namespace Engine::Render
 {
     class BackgroundRenderer : public Basic::Shapes::Square
     {

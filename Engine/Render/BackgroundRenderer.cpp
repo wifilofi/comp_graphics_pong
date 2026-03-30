@@ -1,9 +1,9 @@
 #include "BackgroundRenderer.h"
-#include "../../Engine/Render/ShaderData.h"
-#include "../../Engine/Basic/Components/Rendering.h"
-#include "../../Engine/Render/Pipeline.h"
+#include "ShaderData.h"
+#include "../Basic/Components/Rendering.h"
+#include "Pipeline.h"
 
-using namespace Pong;
+using namespace Engine::Render;
 
 void BackgroundRenderer::Compose(const float2& center, const float2& size)
 {

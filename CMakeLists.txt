@@ -63,13 +63,14 @@ add_executable(${PROJECT_NAME} WIN32
         Game/Pong/Stick.cpp
         Game/Pong/Counter.cpp
         Game/Pong/StickAI.cpp
-        Game/Pong/BackgroundRenderer.h
-        Game/Pong/BackgroundRenderer.cpp
+        Engine/Render/BackgroundRenderer.h
+        Engine/Render/BackgroundRenderer.cpp
         Game/Pong/TextRenderer.h
         Game/Pong/TextRenderer.cpp
         pch.h
-        Game/Pong/BackgroundRenderer.cpp
-        Game/Pong/BackgroundRenderer.cpp)
+        Engine/Render/BackgroundRenderer.cpp
+        Engine/Render/BackgroundRenderer.cpp
+        Engine/Render/BackgroundRenderer.cpp)
 
 target_sources(${PROJECT_NAME}
     PRIVATE
