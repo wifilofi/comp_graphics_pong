@@ -26,7 +26,7 @@ namespace Pong
         std::unique_ptr<DirectX::SpriteFont> spriteFont_;
         std::wstring text_;
         float2 position_  = { 0.5f, 0.05f };
-        float  fontSize_  = 32.f;
+        float  fontSize_  = 48.f;
         float4 color_     = { 1.f, 1.f, 1.f, 1.f };
         float  scale_     = 1.f;
         Engine::Render::Pipeline *pPipeline_ = nullptr;
