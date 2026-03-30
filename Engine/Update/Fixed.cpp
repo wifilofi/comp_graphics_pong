@@ -4,7 +4,7 @@ using namespace Engine::Update;
 
 void Fixed::Compose(float delta)
 {
-    timer_.Compose();
+    timer_.Construct();
     delta_ = delta;
 }
 

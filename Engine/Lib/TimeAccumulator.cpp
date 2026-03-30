@@ -2,7 +2,7 @@
 
 using namespace Lib;
 
-void TimeAccumulator::Compose()
+void TimeAccumulator::Construct()
 {
     current_ = std::chrono::steady_clock::now();
 }

@@ -7,7 +7,7 @@ namespace Lib
     class TimeAccumulator final
     {
     public:
-        void Compose();
+        void Construct();
         void Update();
 
         double GetAccumulated() const { return accumulated_; }
