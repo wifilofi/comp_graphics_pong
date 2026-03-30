@@ -49,12 +49,11 @@ void OrbitalCamera::OnMouse(const Engine::Input::Mouse::Event& e)
         pitch_  = std::clamp(pitch_, -1.4f, 1.4f);
     }
 
-    // Scroll wheel zoom
-    if (e.WheelDelta != 0)
+    /*if (e.WheelDelta != 0)
     {
         const float dir = e.WheelDelta > 0 ? -1.f : 1.f;
         distance_ = max(2.f, distance_ + dir * zoomSpeed_);
-    }
+    }*/
 }
 
 void OrbitalCamera::OnKeyboard(const Engine::Input::Keyboard::Event& e)

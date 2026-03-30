@@ -13,7 +13,7 @@ void BackgroundRenderer::Construct(const float2& center, const float2& size)
 
 void BackgroundRenderer::Construct(Engine::Render::Pipeline* pPipeline)
 {
-    Basic::Components::Rendering::Construct(pPipeline);
+    Basic::Shapes::Square::Construct(pPipeline);
     CreateVertexShader(L"././Shaders/Background.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE);
     CreatePixelShader(L"././Shaders/Background.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE);
     CreateLayout();
