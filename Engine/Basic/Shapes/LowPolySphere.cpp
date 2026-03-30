@@ -10,7 +10,6 @@ std::vector<Vertex3D> LowPolySphere::Vertices(int slices, int stacks)
 {
     std::vector<Vertex3D> verts;
 
-    // Top pole
     verts.push_back({{0, 1, 0}, {0, 1, 0}});
 
     for (int i = 1; i < stacks; ++i)
@@ -26,7 +25,6 @@ std::vector<Vertex3D> LowPolySphere::Vertices(int slices, int stacks)
         }
     }
 
-    // Bottom pole
     verts.push_back({{0, -1, 0}, {0, -1, 0}});
 
     return verts;
@@ -36,27 +34,24 @@ std::vector<int32> LowPolySphere::Indices(int slices, int stacks)
 {
     std::vector<int32> idx;
 
-    // Top fan
     for (int j = 0; j < slices; ++j)
-        idx.insert(idx.end(), {0, 1 + j + 1, 1 + j});
+        idx.insert(idx.end(), {0, 1 + j, 1 + j + 1});
 
-    // Middle quads
     for (int i = 1; i < stacks - 1; ++i)
     {
-        const int32 row  = 1 + (i - 1) * (slices + 1);
-        const int32 next = 1 +  i      * (slices + 1);
+        const int32 row = 1 + (i - 1) * (slices + 1);
+        const int32 next = 1 + i * (slices + 1);
         for (int j = 0; j < slices; ++j)
         {
-            idx.insert(idx.end(), {row+j, next+j, next+j+1});
-            idx.insert(idx.end(), {row+j, next+j+1, row+j+1});
+            idx.insert(idx.end(), {row + j, next + j, next + j + 1});
+            idx.insert(idx.end(), {row + j, next + j + 1, row + j + 1});
         }
     }
 
-    // Bottom fan
-    const int32 lastVert  = 1 + (stacks - 1) * (slices + 1);
-    const int32 lastRing  = 1 + (stacks - 2) * (slices + 1);
+    const int32 lastVert = 1 + (stacks - 1) * (slices + 1);
+    const int32 lastRing = 1 + (stacks - 2) * (slices + 1);
     for (int j = 0; j < slices; ++j)
-        idx.insert(idx.end(), {lastVert, lastRing + j, lastRing + j + 1});
+        idx.insert(idx.end(), {lastVert, lastRing + j + 1, lastRing + j});
 
     return idx;
 }
