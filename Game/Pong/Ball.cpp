@@ -1,3 +1,4 @@
+//#define NOMINMAX
 #include "Ball.h"
 
 #include <cmath>
@@ -86,12 +87,12 @@ void Ball::Collided(Engine::Physics::CollideAble *other)
     //TODO: min max
     const auto ratio = (boundingBox_.Center.y - otherBoundingBox.Center.y) / abs(otherBoundingBox.Extents.y);
     velocity_.y =
-        static_cast<float>(std::min(std::floor(static_cast<double>(ratio) * 10), 9.0) / 10.0);
+        static_cast<float>(min(floor(static_cast<double>(ratio) * 10), 9.0) / 10.0);
 }
 
 float Ball::Clamp(float x, float upper, float down)
 {
 
     //TODO: min max
-    return std::min(upper, std::max(x, down));
+    return min(upper, max(x, down));
 }

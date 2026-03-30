@@ -48,5 +48,5 @@ void Stick::Render(float delta)
 float Stick::Clamp(float x, float upper, float down)
 {
     //TODO: use other min max?
-    return std::min(upper, std::max(x, down));
+    return min(upper, max(x, down));
 }
