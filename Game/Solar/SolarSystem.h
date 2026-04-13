@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include "SolarBody.h"
 #include "../../Engine/Render/Renderer.h"
@@ -20,6 +21,7 @@ namespace Solar
         void Construct(Engine::Render::Pipeline* pPipeline) override;
         void FixedUpdate() override;
         void Render(float delta) override;
+        void RenderUI() override;
 
         void SetInputDevice(Engine::Input::Device* pDevice) { pDevice_ = pDevice; }
 
@@ -27,6 +29,7 @@ namespace Solar
         void OnKeyboard(const Engine::Input::Keyboard::Event& e);
         void SwitchCamera();
         void BuildBodies();
+        void SpawnPlanets(int n);
 
         Engine::Render::Pipeline*          pPipeline_ = nullptr;
         Engine::Input::Device*             pDevice_   = nullptr;
@@ -35,10 +38,8 @@ namespace Solar
         Engine::Render::OrbitalCamera      orbCamera_;
         bool                               useFps_ = false;
 
-        SolarBody sun_;
-        SolarBody mercury_, venus_;
-        SolarBody earth_, moon_;
-        SolarBody mars_, phobos_, deimos_;
-        SolarBody jupiter_, io_, europa_;
+        SolarBody                                   sun_;
+        std::vector<std::unique_ptr<SolarBody>>     planets_;
+        int                                         planetInput_ = 8;
     };
 }

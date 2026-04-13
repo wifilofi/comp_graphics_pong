@@ -1,6 +1,9 @@
 #include "Pipeline.h"
 #include "Camera.h"
 #include <d3d11_1.h>
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
 
 #pragma comment(lib, "d3d11.lib")
 
@@ -36,6 +39,12 @@ void Pipeline::Construct(PHandlerWindow pHandlerWindow, const Point& size)
     pDevice_->CreateBuffer(&camDesc, nullptr, &pCameraBuffer_);
 
     ConstructDepthBuffer(size_.x, size_.y);
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplWin32_Init(hwnd_);
+    ImGui_ImplDX11_Init(pDevice_.Get(), pDeviceContext_);
 }
 void Pipeline::SetCamera(Camera* pCamera)
 {
@@ -92,6 +101,13 @@ void Pipeline::Render(float delta) const
         pDeviceContext_->VSSetConstantBuffers(2, 1, &pCameraBuffer_);
     }
 
+    ImGui_ImplDX11_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
+
+    for (auto* pRenderAble : renderAbles_)
+        pRenderAble->RenderUI();
+
     constexpr float blendFactor[] = {0.0f, 0.0f, 0.0f, 0.0f};
     pDeviceContext_->OMSetBlendState(pBlendState_, blendFactor, 0xFFFFFFFF);
     pDeviceContext_->RSSetViewports(1, &viewport_);
@@ -100,6 +116,11 @@ void Pipeline::Render(float delta) const
         pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, pDepthStencilView_);
         pRenderAble->Render(delta);
     }
+
+    pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, nullptr);
+    ImGui::Render();
+    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
     pSwapChain_->Present(1, 0);
 }
 
@@ -142,6 +163,10 @@ void Pipeline::Resize(int newWidth, int newHeight)
 
 void Pipeline::Destroy() const
 {
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
     pBlendState_->Release();
     pRenderTargetView_->Release();
     pSwapChain_->Release();

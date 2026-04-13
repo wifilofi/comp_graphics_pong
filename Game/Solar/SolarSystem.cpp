@@ -1,6 +1,7 @@
 #include "SolarSystem.h"
 
 #include "../../Engine/Render/Pipeline.h"
+#include <imgui.h>
 
 using namespace Solar;
 using Keys    = Engine::Input::Keyboard::Keys;
@@ -27,42 +28,46 @@ void SolarSystem::Construct(Engine::Render::Pipeline* pPipeline)
 void SolarSystem::BuildBodies()
 {
     using P = SolarBody::Params;
-
-    // sun
     sun_.Construct(pPipeline_, P{ShapeType::Sphere, {1.0f,0.9f,0.1f,1}, 3.f, 0, 0, 0, 0.003f});
+    SpawnPlanets(planetInput_);
+}
 
-    // litl planet
-    mercury_.Construct(pPipeline_, P{ShapeType::Sphere,{0.6f,0.6f,0.6f,1}, 0.4f, 5.f,  0.020f, 0.10f, 0.008f}, &sun_);
-    venus_  .Construct(pPipeline_, P{ShapeType::Box,   {0.9f,0.8f,0.5f,1}, 0.9f, 8.f,  0.013f, 0.05f, 0.004f}, &sun_);
+void SolarSystem::SpawnPlanets(int n)
+{
+    using P = SolarBody::Params;
 
-    // earth + moon
-    earth_  .Construct(pPipeline_, P{ShapeType::Sphere,{0.2f,0.5f,1.0f,1}, 1.0f, 12.f, 0.010f, 0.03f, 0.007f}, &sun_);
-    moon_   .Construct(pPipeline_, P{ShapeType::Sphere,{0.7f,0.7f,0.7f,1}, 0.3f, 2.2f, 0.050f, 0.08f, 0.005f}, &earth_);
+    planets_.clear();
 
-    // mars + moons
-    mars_   .Construct(pPipeline_, P{ShapeType::Sphere,{0.8f,0.3f,0.1f,1}, 0.7f, 17.f, 0.008f, 0.02f, 0.009f}, &sun_);
-    phobos_ .Construct(pPipeline_, P{ShapeType::Box,   {0.5f,0.4f,0.3f,1}, 0.2f, 1.5f, 0.080f, 0.00f, 0.012f}, &mars_);
-    deimos_ .Construct(pPipeline_, P{ShapeType::Sphere,{0.6f,0.5f,0.4f,1}, 0.15f,2.5f, 0.040f, 0.04f, 0.010f}, &mars_);
+    static constexpr float4 kColors[] = {
+        {0.6f, 0.6f, 0.6f, 1}, // grey
+        {0.9f, 0.8f, 0.5f, 1}, // tan
+        {0.2f, 0.5f, 1.0f, 1}, // blue
+        {0.8f, 0.3f, 0.1f, 1}, // red
+        {0.9f, 0.7f, 0.4f, 1}, // orange
+        {0.8f, 0.6f, 0.3f, 1}, // brown
+        {0.6f, 0.7f, 0.9f, 1}, // light blue
+        {0.5f, 0.8f, 0.7f, 1}, // teal
+    };
 
-    // jupiter + moons
-    jupiter_.Construct(pPipeline_, P{ShapeType::Sphere,{0.9f,0.7f,0.4f,1}, 2.0f, 25.f, 0.005f, 0.01f, 0.006f}, &sun_);
-    io_     .Construct(pPipeline_, P{ShapeType::Box,   {0.9f,0.8f,0.2f,1}, 0.4f, 3.5f, 0.030f, 0.06f, 0.011f}, &jupiter_);
-    europa_ .Construct(pPipeline_, P{ShapeType::Sphere,{0.7f,0.8f,0.9f,1}, 0.35f,5.0f, 0.022f, 0.03f, 0.008f}, &jupiter_);
+    for (int i = 0; i < n; ++i)
+    {
+        const float orbit      = 5.f + i * 4.f;
+        const float scale      = 0.3f + 0.12f * static_cast<float>(i % 6);
+        const float speed      = 0.025f / (1.f + i * 0.28f);
+        const float incl       = 0.04f * static_cast<float>(i % 5);
+        const float4& color    = kColors[i % 8];
+        const ShapeType shape  = (i % 4 == 1) ? ShapeType::Box : ShapeType::Sphere;
+
+        auto body = std::make_unique<SolarBody>();
+        body->Construct(pPipeline_, P{shape, color, scale, orbit, speed, incl, 0.007f}, &sun_);
+        planets_.push_back(std::move(body));
+    }
 }
 
 void SolarSystem::FixedUpdate()
 {
-    sun_    .FixedUpdate();
-    mercury_.FixedUpdate();
-    venus_  .FixedUpdate();
-    earth_  .FixedUpdate();
-    moon_   .FixedUpdate();
-    mars_   .FixedUpdate();
-    phobos_ .FixedUpdate();
-    deimos_ .FixedUpdate();
-    jupiter_.FixedUpdate();
-    io_     .FixedUpdate();
-    europa_ .FixedUpdate();
+    sun_.FixedUpdate();
+    for (auto& p : planets_) p->FixedUpdate();
 
     if (useFps_) fpsCamera_.FixedUpdate();
     else         orbCamera_.FixedUpdate();
@@ -70,17 +75,20 @@ void SolarSystem::FixedUpdate()
 
 void SolarSystem::Render(float delta)
 {
-    sun_    .Render(delta);
-    mercury_.Render(delta);
-    venus_  .Render(delta);
-    earth_  .Render(delta);
-    moon_   .Render(delta);
-    mars_   .Render(delta);
-    phobos_ .Render(delta);
-    deimos_ .Render(delta);
-    jupiter_.Render(delta);
-    io_     .Render(delta);
-    europa_ .Render(delta);
+    sun_.Render(delta);
+    for (auto& p : planets_) p->Render(delta);
+}
+
+void SolarSystem::RenderUI()
+{
+    ImGui::Begin("Solar System");
+    ImGui::InputInt("Planet Count", &planetInput_);
+    if (planetInput_ < 1)  planetInput_ = 1;
+    if (planetInput_ > 64) planetInput_ = 64;
+    if (ImGui::Button("Spawn"))
+        SpawnPlanets(planetInput_);
+    ImGui::Text("%d planets active", static_cast<int>(planets_.size()));
+    ImGui::End();
 }
 
 void SolarSystem::OnKeyboard(const Engine::Input::Keyboard::Event& e)

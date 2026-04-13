@@ -1,6 +1,9 @@
 #include "Window.h"
 
 #include "../Game/Game.h"
+#include <imgui_impl_win32.h>
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 using namespace Engine::Render;
 
@@ -65,6 +68,9 @@ void Window::ConstructHandlerWindow()
 
 PInt64 Window::WindowProcedure(PHandlerWindow pHandlerWindow, uint32 message, PUint64 pUintParam, PInt64 pIntParam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(pHandlerWindow, message, pUintParam, pIntParam))
+        return true;
+
     if (message == WM_DESTROY)
     {
         PostQuitMessage(0);

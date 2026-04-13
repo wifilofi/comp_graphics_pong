@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls C:/Users/gfn/Documents/_codern/pong/*.sln C:/Users/gfn/Documents/_codern/pong/*.vcxproj)"
+    ]
+  }
+}

@@ -13,6 +13,7 @@ namespace Engine
 
             virtual void Construct(Pipeline* pPipeline) {}
             virtual void Render(float delta) {}
+            virtual void RenderUI() {}
         };
     }
 }
