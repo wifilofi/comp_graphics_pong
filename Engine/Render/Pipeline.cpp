@@ -72,6 +72,8 @@ void Pipeline::Render(float delta) const
 
     D3D11_MAPPED_SUBRESOURCE frameSub = {};
     pDeviceContext_->Map(pFrameDataBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &frameSub);
+
+    //frame data
     auto* pFrame = static_cast<FrameData*>(frameSub.pData);
     pFrame->time       = time_;
     pFrame->resolution = float2(viewport_.Width, viewport_.Height);

@@ -2,7 +2,7 @@
 
 using namespace Engine::Update;
 
-void Fixed::Compose(float delta)
+void Fixed::Construct(float delta)
 {
     timer_.Construct();
     delta_ = delta;
@@ -21,5 +21,5 @@ void Fixed::Update()
 void Fixed::Add(FixedAble* pFixedUpdateAble)
 {
     fixedUpdateAbles_.push_back(pFixedUpdateAble);
-    pFixedUpdateAble->Compose(this);
+    pFixedUpdateAble->Construct(this);
 }

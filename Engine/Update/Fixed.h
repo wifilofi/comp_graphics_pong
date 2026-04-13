@@ -14,7 +14,7 @@ namespace Engine
         class Fixed final
         {
         public:
-            void Compose(float delta);
+            void Construct(float delta);
             void Update();
 
             void Add(FixedAble* pFixedUpdateAble);

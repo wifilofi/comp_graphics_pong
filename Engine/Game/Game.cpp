@@ -17,7 +17,7 @@ void Game::Construct(const char16 *pName, float fixedDelta) const
     window_->Construct(pName, size);
     inputDevice_->Compose(window_->GetHandlerWindow());
     pipeline_->Construct(window_->GetHandlerWindow(), size);
-    fixedUpdate_->Compose(fixedDelta);
+    fixedUpdate_->Construct(fixedDelta);
     fixedUpdate_->Add(physicsMove_);
     fixedUpdate_->Add(physicsCollide_);
 }

@@ -43,8 +43,5 @@ PS_IN VSMain(VS_IN input)
 
 float4 PSMain(PS_IN input) : SV_Target
 {
-    float3 lightDir = normalize(float3(1.0, 2.0, -1.0));
-    float  diffuse  = saturate(dot(input.normal, lightDir));
-    float  lighting = 0.2 + diffuse * 0.8;
     return float4(input.color.rgb, input.color.a);
 }

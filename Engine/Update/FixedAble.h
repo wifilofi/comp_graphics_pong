@@ -11,7 +11,7 @@ namespace Engine
         public:
             virtual ~FixedAble() = default;
 
-            virtual void Compose(Fixed* pFixed)
+            virtual void Construct(Fixed* pFixed)
             {
             }
 

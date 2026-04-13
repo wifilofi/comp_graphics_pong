@@ -15,7 +15,7 @@ namespace Engine
         class Move final : public Update::FixedAble
         {
         public:
-            void Compose(Update::Fixed* pFixed) override;
+            void Construct(Update::Fixed* pFixed) override;
             void FixedUpdate() override;
 
             void Add(MoveAble* pMoveAble);

@@ -2,7 +2,7 @@
 
 using namespace Engine::Physics;
 
-void Move::Compose(Update::Fixed* pFixed)
+void Move::Construct(Update::Fixed* pFixed)
 {
     pFixed_ = pFixed;
 }
