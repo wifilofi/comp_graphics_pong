@@ -15,6 +15,7 @@ void SolarBody::Construct(Engine::Render::Pipeline* pPipeline, const Params& p,
     parent_          = parent;
     scale_           = p.scale;
     color_           = p.color;
+    color2_          = p.color2;
     orbitRadius_     = p.orbitRadius;
     orbitSpeed_      = p.orbitSpeed;
     orbitInclination_= p.orbitInclination;
@@ -23,10 +24,10 @@ void SolarBody::Construct(Engine::Render::Pipeline* pPipeline, const Params& p,
 
     if (p.shape == ShapeType::Sphere)
         rendering_.Construct(pPipeline, Basic::Shapes::LowPolySphere::Vertices(),
-                                        Basic::Shapes::LowPolySphere::Indices());
+                                        Basic::Shapes::LowPolySphere::Indices(), p.shaderType);
     else
         rendering_.Construct(pPipeline, Basic::Shapes::Box::Vertices(),
-                                        Basic::Shapes::Box::Indices());
+                                        Basic::Shapes::Box::Indices(), p.shaderType);
 }
 
 void SolarBody::FixedUpdate()
@@ -47,7 +48,7 @@ void SolarBody::FixedUpdate()
 
 void SolarBody::Render(float /*delta*/)
 {
-    rendering_.Draw(ComputeModelMatrix(), color_);
+    rendering_.Draw(ComputeModelMatrix(), color_, color2_);
 }
 
 float4x4 SolarBody::ComputeModelMatrix() const

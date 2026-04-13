@@ -13,16 +13,20 @@ namespace Solar
     class SolarBody
     {
     public:
+        using ShaderType = Basic::Components::Rendering3D::ShaderType;
+
         struct Params
         {
-            ShapeType shape            = ShapeType::Sphere;
-            float4    color            = float4(1, 1, 1, 1);
-            float     scale            = 1.f;
-            float     orbitRadius      = 0.f;
-            float     orbitSpeed       = 0.f;
-            float     orbitInclination = 0.f;
-            float     selfRotSpeed     = 0.01f;
-            float     orbitAngleOffset = 0.f;
+            ShapeType  shape            = ShapeType::Sphere;
+            float4     color            = float4(1, 1, 1, 1);
+            float4     color2           = float4(1, 1, 1, 1);
+            ShaderType shaderType       = ShaderType::SolidColor;
+            float      scale            = 1.f;
+            float      orbitRadius      = 0.f;
+            float      orbitSpeed       = 0.f;
+            float      orbitInclination = 0.f;
+            float      selfRotSpeed     = 0.01f;
+            float      orbitAngleOffset = 0.f;
         };
 
         void Construct(Engine::Render::Pipeline* pPipeline, const Params& params,
@@ -42,6 +46,7 @@ namespace Solar
         float3           position_  = float3(0, 0, 0);
         float            scale_     = 1.f;
         float4           color_     = float4(1, 1, 1, 1);
+        float4           color2_    = float4(1, 1, 1, 1);
         float            orbitRadius_     = 0.f;
         float            orbitSpeed_      = 0.f;
         float            orbitInclination_= 0.f;

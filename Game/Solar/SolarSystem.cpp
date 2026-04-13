@@ -27,7 +27,8 @@ void SolarSystem::Construct(Engine::Render::Pipeline* pPipeline)
 void SolarSystem::BuildBodies()
 {
     using P = SolarBody::Params;
-    sun_.Construct(pPipeline_, P{ShapeType::Sphere, {1.0f,0.9f,0.1f,1}, 3.f, 0, 0, 0, 0.003f});
+    sun_.Construct(pPipeline_, P{ShapeType::Sphere, {1.0f,0.9f,0.1f,1}, {1.0f,0.5f,0.0f,1},
+                                 SolarBody::ShaderType::PerlinNoise, 3.f, 0, 0, 0, 0.003f});
     SpawnPlanets(planetInput_);
 }
 
@@ -37,6 +38,7 @@ void SolarSystem::SpawnPlanets(int n)
 
     planets_.clear();
 
+    // Primary and secondary colors — noise shader lerps between the pair.
     static constexpr float4 kColors[] = {
         {0.6f, 0.6f, 0.6f, 1}, // grey
         {0.9f, 0.8f, 0.5f, 1}, // tan
@@ -46,6 +48,16 @@ void SolarSystem::SpawnPlanets(int n)
         {0.8f, 0.6f, 0.3f, 1}, // brown
         {0.6f, 0.7f, 0.9f, 1}, // light blue
         {0.5f, 0.8f, 0.7f, 1}, // teal
+    };
+    static constexpr float4 kColors2[] = {
+        {0.15f, 0.10f, 0.10f, 1}, // dark rock
+        {0.30f, 0.55f, 0.20f, 1}, // vegetation green
+        {0.05f, 0.15f, 0.40f, 1}, // deep ocean
+        {0.25f, 0.10f, 0.05f, 1}, // dark mars
+        {0.40f, 0.25f, 0.05f, 1}, // dark band
+        {0.20f, 0.15f, 0.08f, 1}, // dark soil
+        {0.90f, 0.95f, 1.00f, 1}, // ice/cloud
+        {0.10f, 0.30f, 0.25f, 1}, // deep teal
     };
 
     // Keep spacing ≤ 2 for small counts; compress to fit all planets within the far plane.
@@ -58,7 +70,8 @@ void SolarSystem::SpawnPlanets(int n)
         const float orbit = 3.f + fi * step;
         const float scale = 0.8f + 0.25f * static_cast<float>(i % 6);
         const float speed = 0.025f / (1.f + fi * 0.28f);
-        const float4& color = kColors[i % 8];
+        const float4& color  = kColors[i % 8];
+        const float4& color2 = kColors2[i % 8];
         const ShapeType shape = (i % 4 == 1) ? ShapeType::Box : ShapeType::Sphere;
 
         float incl       = 0.f;
@@ -77,7 +90,9 @@ void SolarSystem::SpawnPlanets(int n)
         }
 
         auto body = std::make_unique<SolarBody>();
-        body->Construct(pPipeline_, P{shape, color, scale, orbit, speed, incl, 0.007f, angleOffset}, &sun_);
+        body->Construct(pPipeline_, P{shape, color, color2,
+                                      SolarBody::ShaderType::PerlinNoise,
+                                      scale, orbit, speed, incl, 0.007f, angleOffset}, &sun_);
         planets_.push_back(std::move(body));
     }
 }

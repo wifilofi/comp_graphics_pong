@@ -9,47 +9,55 @@ using namespace Basic::Components;
 
 void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
                             const std::vector<Vertex3D>& vertices,
-                            const std::vector<int32>& indices)
+                            const std::vector<int32>& indices,
+                            ShaderType shaderType)
 {
     pPipeline_  = pPipeline;
     indexCount_ = static_cast<int32>(indices.size());
     auto* device = pPipeline_->GetDevice();
 
-    // Shared across all Rendering3D instances — only compiled once.
-    static DXVertexShader*    s_pVertexShader  = nullptr;
-    static DXPixelShader*     s_pPixelShader   = nullptr;
-    static DXInputLayout*     s_pInputLayout   = nullptr;
+    // One cached set of D3D11 objects per shader type.
+    // Compiled once on first use, shared by every instance of that type.
+    static DXVertexShader* s_pVS[2]     = {};
+    static DXPixelShader*  s_pPS[2]     = {};
+    static DXInputLayout*  s_pLayout[2] = {};
 
-    if (!s_pVertexShader)
+    const int idx = static_cast<int>(shaderType);
+
+    if (!s_pVS[idx])
     {
+        const wchar_t* file = (shaderType == ShaderType::PerlinNoise)
+            ? L"././Shaders/ShaderNoise3D.hlsl"
+            : L"././Shaders/Shader3D.hlsl";
+
         DXBlob* pVSBlob = nullptr;
         DXBlob* pError  = nullptr;
-        D3DCompileFromFile(L"././Shaders/Shader3D.hlsl", nullptr, nullptr,
+        D3DCompileFromFile(file, nullptr, nullptr,
                            "VSMain", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
                            0, &pVSBlob, &pError);
         device->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(),
-                                   nullptr, &s_pVertexShader);
+                                   nullptr, &s_pVS[idx]);
 
         DXBlob* pPSBlob = nullptr;
-        D3DCompileFromFile(L"././Shaders/Shader3D.hlsl", nullptr, nullptr,
+        D3DCompileFromFile(file, nullptr, nullptr,
                            "PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
                            0, &pPSBlob, &pError);
         device->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(),
-                                  nullptr, &s_pPixelShader);
+                                  nullptr, &s_pPS[idx]);
 
         const D3D11_INPUT_ELEMENT_DESC layout[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
         device->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(),
-                                  pVSBlob->GetBufferSize(), &s_pInputLayout);
+                                  pVSBlob->GetBufferSize(), &s_pLayout[idx]);
         pVSBlob->Release();
         if (pPSBlob) pPSBlob->Release();
     }
 
-    pVertexShader_  = s_pVertexShader;
-    pPixelShader_   = s_pPixelShader;
-    pInputLayout_   = s_pInputLayout;
+    pVertexShader_ = s_pVS[idx];
+    pPixelShader_  = s_pPS[idx];
+    pInputLayout_  = s_pLayout[idx];
 
     D3D11_BUFFER_DESC vbDesc = {};
     vbDesc.Usage     = D3D11_USAGE_DEFAULT;
@@ -86,7 +94,7 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     pRasterizerState_ = s_pRasterizerState;
 }
 
-void Rendering3D::Draw(const float4x4& model, const float4& color)
+void Rendering3D::Draw(const float4x4& model, const float4& color, const float4& color2)
 {
     auto* ctx = pPipeline_->GetDeviceContext();
 
@@ -95,6 +103,7 @@ void Rendering3D::Draw(const float4x4& model, const float4& color)
     auto* pObj    = static_cast<ObjectData*>(sub.pData);
     pObj->model   = model.Transpose();
     pObj->color   = color;
+    pObj->color2  = color2;
     ctx->Unmap(pObjectBuffer_, 0);
     ctx->VSSetConstantBuffers(0, 1, &pObjectBuffer_);
     ctx->PSSetConstantBuffers(0, 1, &pObjectBuffer_);
