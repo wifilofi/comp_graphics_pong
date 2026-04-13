@@ -19,6 +19,7 @@ void SolarBody::Construct(Engine::Render::Pipeline* pPipeline, const Params& p,
     orbitSpeed_      = p.orbitSpeed;
     orbitInclination_= p.orbitInclination;
     selfRotSpeed_    = p.selfRotSpeed;
+    orbitAngle_      = p.orbitAngleOffset;
 
     if (p.shape == ShapeType::Sphere)
         rendering_.Construct(pPipeline, Basic::Shapes::LowPolySphere::Vertices(),

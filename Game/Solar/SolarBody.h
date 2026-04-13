@@ -15,13 +15,14 @@ namespace Solar
     public:
         struct Params
         {
-            ShapeType shape       = ShapeType::Sphere;
-            float4    color       = float4(1, 1, 1, 1);
-            float     scale       = 1.f;
-            float     orbitRadius = 0.f;
-            float     orbitSpeed  = 0.f;
+            ShapeType shape            = ShapeType::Sphere;
+            float4    color            = float4(1, 1, 1, 1);
+            float     scale            = 1.f;
+            float     orbitRadius      = 0.f;
+            float     orbitSpeed       = 0.f;
             float     orbitInclination = 0.f;
-            float     selfRotSpeed = 0.01f;
+            float     selfRotSpeed     = 0.01f;
+            float     orbitAngleOffset = 0.f;
         };
 
         void Construct(Engine::Render::Pipeline* pPipeline, const Params& params,

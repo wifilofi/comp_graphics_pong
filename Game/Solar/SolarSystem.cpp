@@ -48,21 +48,36 @@ void SolarSystem::SpawnPlanets(int n)
         {0.5f, 0.8f, 0.7f, 1}, // teal
     };
 
-    // Keep spacing ≤ 4 for small counts; compress to fit all planets within the far plane.
+    // Keep spacing ≤ 2 for small counts; compress to fit all planets within the far plane.
     const float raw  = n > 1 ? 1900.f / static_cast<float>(n) : 1900.f;
     const float step = raw < 2.f ? raw : 2.f;
 
     for (int i = 0; i < n; ++i)
     {
-        const float orbit      = 3.f + i * step;
-        const float scale      = 0.8f + 0.25f * static_cast<float>(i % 6);
-        const float speed      = 0.025f / (1.f + i * 0.28f);
-        const float incl       = 0.35f * static_cast<float>(i);
-        const float4& color    = kColors[i % 8];
-        const ShapeType shape  = (i % 4 == 1) ? ShapeType::Box : ShapeType::Sphere;
+        const float fi    = static_cast<float>(i);
+        const float orbit = 3.f + fi * step;
+        const float scale = 0.8f + 0.25f * static_cast<float>(i % 6);
+        const float speed = 0.025f / (1.f + fi * 0.28f);
+        const float4& color = kColors[i % 8];
+        const ShapeType shape = (i % 4 == 1) ? ShapeType::Box : ShapeType::Sphere;
+
+        float incl       = 0.f;
+        float angleOffset = 0.f;
+
+        if (formula_ == Formula::Spiral3D)
+        {
+            // 3D helix: each planet's orbital plane is tilted more than the last.
+            // incl = inclStep_ * i
+            incl = inclStep_ * fi;
+        }
+        else
+        {
+            angleOffset = angleStep_ * i;
+            //angleOffset = angleStep_ * fi;
+        }
 
         auto body = std::make_unique<SolarBody>();
-        body->Construct(pPipeline_, P{shape, color, scale, orbit, speed, incl, 0.007f}, &sun_);
+        body->Construct(pPipeline_, P{shape, color, scale, orbit, speed, incl, 0.007f, angleOffset}, &sun_);
         planets_.push_back(std::move(body));
     }
 }
@@ -85,11 +100,24 @@ void SolarSystem::Render(float delta)
 void SolarSystem::RenderUI()
 {
     ImGui::Begin("Solar System");
+
     ImGui::InputInt("Planet Count", &planetInput_);
     if (planetInput_ < 1)    planetInput_ = 1;
     if (planetInput_ > 1000) planetInput_ = 1000;
+
+    // Formula selector
+    int formulaIdx = (formula_ == Formula::Spiral2D) ? 1 : 0;
+    if (ImGui::Combo("Formula", &formulaIdx, "3D Spiral\0""2D Spiral\0"))
+        formula_ = (formulaIdx == 1) ? Formula::Spiral2D : Formula::Spiral3D;
+
+    if (formula_ == Formula::Spiral3D)
+        ImGui::SliderFloat("Tilt per planet (rad)", &inclStep_, 0.0f, 1.0f);
+    else
+        ImGui::SliderFloat("Angle per planet (rad)", &angleStep_, 0.1f, 6.28f);
+
     if (ImGui::Button("Spawn"))
         SpawnPlanets(planetInput_);
+
     ImGui::Text("%d planets active", static_cast<int>(planets_.size()));
     ImGui::End();
 }
