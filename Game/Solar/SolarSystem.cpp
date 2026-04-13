@@ -50,14 +50,14 @@ void SolarSystem::SpawnPlanets(int n)
 
     // Keep spacing ≤ 4 for small counts; compress to fit all planets within the far plane.
     const float raw  = n > 1 ? 1900.f / static_cast<float>(n) : 1900.f;
-    const float step = raw < 4.f ? raw : 4.f;
+    const float step = raw < 2.f ? raw : 2.f;
 
     for (int i = 0; i < n; ++i)
     {
-        const float orbit      = 5.f + i * step;
-        const float scale      = 0.3f + 0.12f * static_cast<float>(i % 6);
+        const float orbit      = 3.f + i * step;
+        const float scale      = 0.8f + 0.25f * static_cast<float>(i % 6);
         const float speed      = 0.025f / (1.f + i * 0.28f);
-        const float incl       = 0.04f * static_cast<float>(i % 5);
+        const float incl       = 0.35f * static_cast<float>(i);
         const float4& color    = kColors[i % 8];
         const ShapeType shape  = (i % 4 == 1) ? ShapeType::Box : ShapeType::Sphere;
 
