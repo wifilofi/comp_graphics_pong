@@ -2,7 +2,6 @@
 
 #include "../../Engine/Render/Pipeline.h"
 #include <imgui.h>
-
 using namespace Solar;
 using Keys    = Engine::Input::Keyboard::Keys;
 using Buttons = Engine::Input::Keyboard::Buttons;
@@ -49,9 +48,13 @@ void SolarSystem::SpawnPlanets(int n)
         {0.5f, 0.8f, 0.7f, 1}, // teal
     };
 
+    // Keep spacing ≤ 4 for small counts; compress to fit all planets within the far plane.
+    const float raw  = n > 1 ? 1900.f / static_cast<float>(n) : 1900.f;
+    const float step = raw < 4.f ? raw : 4.f;
+
     for (int i = 0; i < n; ++i)
     {
-        const float orbit      = 5.f + i * 4.f;
+        const float orbit      = 5.f + i * step;
         const float scale      = 0.3f + 0.12f * static_cast<float>(i % 6);
         const float speed      = 0.025f / (1.f + i * 0.28f);
         const float incl       = 0.04f * static_cast<float>(i % 5);
@@ -83,8 +86,8 @@ void SolarSystem::RenderUI()
 {
     ImGui::Begin("Solar System");
     ImGui::InputInt("Planet Count", &planetInput_);
-    if (planetInput_ < 1)  planetInput_ = 1;
-    if (planetInput_ > 64) planetInput_ = 64;
+    if (planetInput_ < 1)    planetInput_ = 1;
+    if (planetInput_ > 1000) planetInput_ = 1000;
     if (ImGui::Button("Spawn"))
         SpawnPlanets(planetInput_);
     ImGui::Text("%d planets active", static_cast<int>(planets_.size()));

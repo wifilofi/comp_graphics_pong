@@ -15,30 +15,41 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     indexCount_ = static_cast<int32>(indices.size());
     auto* device = pPipeline_->GetDevice();
 
+    // Shared across all Rendering3D instances — only compiled once.
+    static DXVertexShader*    s_pVertexShader  = nullptr;
+    static DXPixelShader*     s_pPixelShader   = nullptr;
+    static DXInputLayout*     s_pInputLayout   = nullptr;
 
-    DXBlob* pVSBlob = nullptr;
-    DXBlob* pError  = nullptr;
-    D3DCompileFromFile(L"././Shaders/Shader3D.hlsl", nullptr, nullptr,
-                       "VSMain", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-                       0, &pVSBlob, &pError);
-    device->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(),
-                               nullptr, &pVertexShader_);
+    if (!s_pVertexShader)
+    {
+        DXBlob* pVSBlob = nullptr;
+        DXBlob* pError  = nullptr;
+        D3DCompileFromFile(L"././Shaders/Shader3D.hlsl", nullptr, nullptr,
+                           "VSMain", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+                           0, &pVSBlob, &pError);
+        device->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(),
+                                   nullptr, &s_pVertexShader);
 
-    DXBlob* pPSBlob = nullptr;
-    D3DCompileFromFile(L"././Shaders/Shader3D.hlsl", nullptr, nullptr,
-                       "PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-                       0, &pPSBlob, &pError);
-    device->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(),
-                              nullptr, &pPixelShader_);
+        DXBlob* pPSBlob = nullptr;
+        D3DCompileFromFile(L"././Shaders/Shader3D.hlsl", nullptr, nullptr,
+                           "PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+                           0, &pPSBlob, &pError);
+        device->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(),
+                                  nullptr, &s_pPixelShader);
 
-    const D3D11_INPUT_ELEMENT_DESC layout[] = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    };
-    device->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(),
-                              pVSBlob->GetBufferSize(), &pInputLayout_);
-    pVSBlob->Release();
-    if (pPSBlob) pPSBlob->Release();
+        const D3D11_INPUT_ELEMENT_DESC layout[] = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        };
+        device->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(),
+                                  pVSBlob->GetBufferSize(), &s_pInputLayout);
+        pVSBlob->Release();
+        if (pPSBlob) pPSBlob->Release();
+    }
+
+    pVertexShader_  = s_pVertexShader;
+    pPixelShader_   = s_pPixelShader;
+    pInputLayout_   = s_pInputLayout;
 
     D3D11_BUFFER_DESC vbDesc = {};
     vbDesc.Usage     = D3D11_USAGE_DEFAULT;
@@ -63,11 +74,16 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     obDesc.ByteWidth      = sizeof(ObjectData);
     device->CreateBuffer(&obDesc, nullptr, &pObjectBuffer_);
 
-    CD3D11_RASTERIZER_DESC rastDesc = {};
-    rastDesc.FillMode = D3D11_FILL_SOLID;
-    rastDesc.CullMode = D3D11_CULL_BACK;
-    rastDesc.FrontCounterClockwise = FALSE;
-    device->CreateRasterizerState(&rastDesc, &pRasterizerState_);
+    static DXRasterizerState* s_pRasterizerState = nullptr;
+    if (!s_pRasterizerState)
+    {
+        CD3D11_RASTERIZER_DESC rastDesc = {};
+        rastDesc.FillMode = D3D11_FILL_SOLID;
+        rastDesc.CullMode = D3D11_CULL_BACK;
+        rastDesc.FrontCounterClockwise = FALSE;
+        device->CreateRasterizerState(&rastDesc, &s_pRasterizerState);
+    }
+    pRasterizerState_ = s_pRasterizerState;
 }
 
 void Rendering3D::Draw(const float4x4& model, const float4& color)
