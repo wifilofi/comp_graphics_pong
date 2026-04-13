@@ -16,8 +16,6 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     indexCount_ = static_cast<int32>(indices.size());
     auto* device = pPipeline_->GetDevice();
 
-    // One cached set of D3D11 objects per shader type.
-    // Compiled once on first use, shared by every instance of that type.
     static DXVertexShader* s_pVS[2]     = {};
     static DXPixelShader*  s_pPS[2]     = {};
     static DXInputLayout*  s_pLayout[2] = {};

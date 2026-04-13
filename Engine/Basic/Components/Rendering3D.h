@@ -22,7 +22,7 @@ namespace Basic::Components
         {
             float4x4 model;
             float4   color;
-            float4   color2;  // used by PerlinNoise shader; ignored by SolidColor
+            float4   color2;
         };
 
         void Construct(Engine::Render::Pipeline* pPipeline,

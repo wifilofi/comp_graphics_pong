@@ -1,7 +1,3 @@
-// ShaderNoise3D.hlsl
-// Surface color is determined by fractal Brownian motion (value noise, 5 octaves)
-// sampled at the local vertex position, then lerped between 'color' and 'color2'.
-
 cbuffer ObjectBuffer : register(b0)
 {
     float4x4 model;
@@ -32,7 +28,7 @@ struct PS_IN
 {
     float4 pos      : SV_POSITION;
     float3 normal   : NORMAL0;
-    float3 localPos : TEXCOORD0;  // local vertex position → noise coordinate
+    float3 localPos : TEXCOORD0;
 };
 
 PS_IN VSMain(VS_IN input)
@@ -46,9 +42,6 @@ PS_IN VSMain(VS_IN input)
     return output;
 }
 
-// ---- Noise ---------------------------------------------------------------
-
-// Hash: maps integer grid corners to pseudo-random floats in [0, 1].
 float hash(float3 p)
 {
     p = frac(p * float3(443.8975f, 397.2973f, 491.1871f));
@@ -56,12 +49,11 @@ float hash(float3 p)
     return frac((p.x + p.y) * p.z);
 }
 
-// Smooth value noise (trilinear interpolation with smoothstep).
 float noise(float3 p)
 {
     float3 i = floor(p);
     float3 f = frac(p);
-    float3 u = f * f * (3.0f - 2.0f * f);   // smoothstep
+    float3 u = f * f * (3.0f - 2.0f * f);
 
     return lerp(
         lerp(lerp(hash(i + float3(0,0,0)), hash(i + float3(1,0,0)), u.x),
@@ -70,7 +62,6 @@ float noise(float3 p)
              lerp(hash(i + float3(0,1,1)), hash(i + float3(1,1,1)), u.x), u.y), u.z);
 }
 
-// Fractal Brownian Motion — 5 octaves, each halving amplitude and doubling frequency.
 float fbm(float3 p)
 {
     float v = 0.0f;
@@ -84,14 +75,9 @@ float fbm(float3 p)
     return v;
 }
 
-// ---- Pixel shader --------------------------------------------------------
-
 float4 PSMain(PS_IN input) : SV_Target
 {
-    // Scale and slowly animate the noise coordinate.
     float n = fbm(input.localPos * 3.0f + time * 0.06f);
-
-    // Remap [0, 1] noise into a sharper contrast band then lerp colors.
     float t = saturate(n * 2.2f - 0.4f);
     return lerp(color, color2, t);
 }

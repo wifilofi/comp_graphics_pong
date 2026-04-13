@@ -38,29 +38,27 @@ void SolarSystem::SpawnPlanets(int n)
 
     planets_.clear();
 
-    // Primary and secondary colors — noise shader lerps between the pair.
     static constexpr float4 kColors[] = {
-        {0.6f, 0.6f, 0.6f, 1}, // grey
-        {0.9f, 0.8f, 0.5f, 1}, // tan
-        {0.2f, 0.5f, 1.0f, 1}, // blue
-        {0.8f, 0.3f, 0.1f, 1}, // red
-        {0.9f, 0.7f, 0.4f, 1}, // orange
-        {0.8f, 0.6f, 0.3f, 1}, // brown
-        {0.6f, 0.7f, 0.9f, 1}, // light blue
-        {0.5f, 0.8f, 0.7f, 1}, // teal
+        {0.6f, 0.6f, 0.6f, 1},
+        {0.9f, 0.8f, 0.5f, 1},
+        {0.2f, 0.5f, 1.0f, 1},
+        {0.8f, 0.3f, 0.1f, 1},
+        {0.9f, 0.7f, 0.4f, 1},
+        {0.8f, 0.6f, 0.3f, 1},
+        {0.6f, 0.7f, 0.9f, 1},
+        {0.5f, 0.8f, 0.7f, 1},
     };
     static constexpr float4 kColors2[] = {
-        {0.15f, 0.10f, 0.10f, 1}, // dark rock
-        {0.30f, 0.55f, 0.20f, 1}, // vegetation green
-        {0.05f, 0.15f, 0.40f, 1}, // deep ocean
-        {0.25f, 0.10f, 0.05f, 1}, // dark mars
-        {0.40f, 0.25f, 0.05f, 1}, // dark band
-        {0.20f, 0.15f, 0.08f, 1}, // dark soil
-        {0.90f, 0.95f, 1.00f, 1}, // ice/cloud
-        {0.10f, 0.30f, 0.25f, 1}, // deep teal
+        {0.15f, 0.10f, 0.10f, 1},
+        {0.30f, 0.55f, 0.20f, 1},
+        {0.05f, 0.15f, 0.40f, 1},
+        {0.25f, 0.10f, 0.05f, 1},
+        {0.40f, 0.25f, 0.05f, 1},
+        {0.20f, 0.15f, 0.08f, 1},
+        {0.90f, 0.95f, 1.00f, 1},
+        {0.10f, 0.30f, 0.25f, 1},
     };
 
-    // Keep spacing ≤ 2 for small counts; compress to fit all planets within the far plane.
     const float raw  = n > 1 ? 1900.f / static_cast<float>(n) : 1900.f;
     const float step = raw < 2.f ? raw : 2.f;
 
@@ -78,16 +76,9 @@ void SolarSystem::SpawnPlanets(int n)
         float angleOffset = 0.f;
 
         if (formula_ == Formula::Spiral3D)
-        {
-            // 3D helix: each planet's orbital plane is tilted more than the last.
-            // incl = inclStep_ * i
             incl = inclStep_ * fi;
-        }
         else
-        {
             angleOffset = angleStep_ * i;
-            //angleOffset = angleStep_ * fi;
-        }
 
         auto body = std::make_unique<SolarBody>();
         body->Construct(pPipeline_, P{shape, color, color2,
