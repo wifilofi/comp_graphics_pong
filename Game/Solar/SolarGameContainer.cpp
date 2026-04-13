@@ -8,6 +8,8 @@ using namespace Solar;
 
 void SolarGameContainer::Setup(Game* pGame)
 {
+    pGame->GetRenderPipeline()->SetBackgroundColor({0.f, 0.f, 0.f, 1.f});
+
     auto* system = new SolarSystem();
 
     system->SetInputDevice(pGame->GetInputDevice());

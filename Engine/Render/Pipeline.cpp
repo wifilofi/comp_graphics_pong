@@ -66,7 +66,7 @@ void Pipeline::Render(float delta) const
     pDeviceContext_->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&pContext1));
     if (pContext1)
     {
-        constexpr float gameColor[] = {0x2c / 255.0f, 0x4b / 255.0f, 0x76 / 255.0f, 1.0f};
+        const float gameColor[] = {bgColor_.x, bgColor_.y, bgColor_.z, bgColor_.w};
         const D3D11_RECT rect = {
             static_cast<LONG>(viewport_.TopLeftX),
             static_cast<LONG>(viewport_.TopLeftY),

@@ -21,6 +21,7 @@ namespace Engine
             void Destroy() const;
             void Add(Renderer* pRenderAble);
             void SetCamera(Camera* pCamera);
+            void SetBackgroundColor(const float4& color) { bgColor_ = color; }
 
             DXDevice* GetDevice() const { return pDevice_.Get(); }
             DXDeviceContext* GetDeviceContext() const { return pDeviceContext_; }
@@ -58,6 +59,7 @@ namespace Engine
             DXBuffer* pFrameDataBuffer_ = nullptr;
             DXBuffer* pCameraBuffer_ = nullptr;
             mutable float time_ = 0.f;
+            float4 bgColor_ = {0x2c / 255.0f, 0x4b / 255.0f, 0x76 / 255.0f, 1.0f};
             std::vector<Renderer*> renderAbles_{};
             PHandlerWindow hwnd_ = nullptr;
             Camera* pCamera_ = nullptr;
