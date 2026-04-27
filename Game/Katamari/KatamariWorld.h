@@ -8,6 +8,7 @@
 #include "../../Engine/Update/FixedAble.h"
 #include "../../Engine/Input/Device.h"
 #include "../../Engine/Basic/Components/Rendering3D.h"
+#include "../../Engine/Basic/Components/Rendering3DTex.h"
 #include "../../Engine/Render/OrbitalCamera.h"
 #include "../../Engine/Lib/Types.h"
 
@@ -66,7 +67,9 @@ namespace Katamari
         Basic::Components::Rendering3D spherePickupRenderer_;
         Basic::Components::Rendering3D boxPickupRenderer_;
 
-        std::unique_ptr<Basic::Components::Rendering3D> fbxRenderer_;
+        std::unique_ptr<Basic::Components::Rendering3DTex> fbxRenderer_;
+        std::unique_ptr<Basic::Components::Rendering3D>   fbxFallbackRenderer_;
+        ID3D11ShaderResourceView*                          fbxTexSRV_ = nullptr;
 
         std::vector<Pickup>    pickups_;
         std::vector<FbxPickup> fbxPickups_;

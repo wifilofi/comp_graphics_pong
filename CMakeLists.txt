@@ -87,6 +87,8 @@ add_executable(${PROJECT_NAME} WIN32
         Game/Katamari/KatamariGameContainer.cpp
         Game/Katamari/KatamariWorld.h
         Game/Katamari/KatamariWorld.cpp
+        Engine/Basic/Components/Rendering3DTex.h
+        Engine/Basic/Components/Rendering3DTex.cpp
 )
 
 target_sources(${PROJECT_NAME}

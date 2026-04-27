@@ -26,7 +26,7 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     {
         const wchar_t* file = (shaderType == ShaderType::PerlinNoise)
             ? L"././Shaders/ShaderNoise3D.hlsl"
-            : L"././Shaders/Shader3D.hlsl";
+            : L"././Shaders/ShaderTex3D.hlsl";
 
         DXBlob* pVSBlob = nullptr;
         DXBlob* pError  = nullptr;
