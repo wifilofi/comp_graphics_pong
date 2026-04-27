@@ -10,5 +10,7 @@
     "name" : "imgui",
     "version>=" : "1.92.6",
     "features" : [ "dx11-binding", "win32-binding" ]
+  }, {
+    "name" : "assimp"
   } ]
 }

@@ -83,6 +83,10 @@ add_executable(${PROJECT_NAME} WIN32
         Engine/Basic/Components/Rendering3D.cpp
         Engine/Basic/Shapes/Box.cpp
         Engine/Basic/Shapes/LowPolySphere.cpp
+        Game/Katamari/KatamariGameContainer.h
+        Game/Katamari/KatamariGameContainer.cpp
+        Game/Katamari/KatamariWorld.h
+        Game/Katamari/KatamariWorld.cpp
 )
 
 target_sources(${PROJECT_NAME}
@@ -114,6 +118,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 # Uncomment if using the DirectX Tool Kit
 find_package(directxtk CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE Microsoft::DirectXTK)
+
+find_package(assimp CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp)
 
 # Uncomment if using XAudio2Redist (required for MINGW)
 # find_package(xaudio2redist CONFIG REQUIRED)
