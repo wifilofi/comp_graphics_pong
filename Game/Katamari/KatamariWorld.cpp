@@ -56,7 +56,7 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
     SpawnPickups();
 }
 
-// ---- Spawn -------------------------------------------------------------------
+
 
 void KatamariWorld::SpawnPickups()
 {
@@ -407,7 +407,7 @@ void KatamariWorld::LoadMesh(const std::string& path)
         FbxPickup p;
         p.pos.x  = (rand() % 6000 - 3000) / 100.f;
         p.pos.z  = (rand() % 6000 - 3000) / 100.f;
-        p.radius = 0.7f + (rand() % 120) / 100.f;
+        p.radius = (0.7f + (rand() % 120) / 100.f) * 10.f;
         p.pos.y  = p.radius;
         fbxPickups_.push_back(p);
     }
