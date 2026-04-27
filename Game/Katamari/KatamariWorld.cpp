@@ -145,7 +145,7 @@ void KatamariWorld::CheckCollisions()
         if (p.absorbed) continue;
         const float3 pickupCenter(p.pos.x, p.radius, p.pos.z);
         const float  dist = (ballCenter - pickupCenter).Length();
-        if (dist < ballRadius_ + p.radius && ballRadius_ >= p.radius)
+        if (dist < (ballRadius_ + p.radius) * 2.f && ballRadius_ >= p.radius)
             AbsorbFbxPickup(p);
     }
 }
@@ -359,12 +359,12 @@ void KatamariWorld::LoadMesh(const std::string& path)
 
     if (verts.empty() || indices.empty()) return;
 
-    // tex_<stem>.png next to the mesh file
+
     namespace fs = std::filesystem;
     const fs::path meshPath(path);
     const std::string texPath = (meshPath.parent_path() / ("tex_" + meshPath.stem().string() + ".png")).string();
 
-    // Load texture (fallback: 1x1 white)
+
     ID3D11ShaderResourceView* pSRV = nullptr;
     {
         std::wstring wpath(texPath.begin(), texPath.end());
@@ -398,8 +398,7 @@ void KatamariWorld::LoadMesh(const std::string& path)
     fbxMeshRenderer_->Construct(pPipeline_, verts, indices,
         Basic::Components::Rendering3D::ShaderType::ShaderTex, fbxTexSRV_);
 
-    // Spawn 5 instances scattered on the plane
-    fbxPickups_.clear();
+
     const unsigned seed = static_cast<unsigned>(reinterpret_cast<uintptr_t>(fbxTexSRV_) & 0xFFFF);
     srand(seed ? seed : 1u);
     for (int i = 0; i < 5; ++i)
@@ -407,8 +406,7 @@ void KatamariWorld::LoadMesh(const std::string& path)
         FbxPickup p;
         p.pos.x  = (rand() % 6000 - 3000) / 100.f;
         p.pos.z  = (rand() % 6000 - 3000) / 100.f;
-        p.radius = (0.7f + (rand() % 120) / 100.f) * 10.f;
-        p.pos.y  = p.radius;
+        p.radius = (0.7f + (rand() % 120) / 100.f) * 2.f;
         fbxPickups_.push_back(p);
     }
 }

@@ -56,7 +56,7 @@ namespace Katamari
         Engine::Render::OrbitalCamera     camera_;
 
         float3   ballPos_    = {0.f, 0.f, 0.f};
-        float    ballRadius_ = 1.5f;
+        float    ballRadius_ = 3.f;
         float3   ballVel_    = {0.f, 0.f, 0.f};
         float4x4 rollMatrix_;
         int      absorbedCount_ = 0;
