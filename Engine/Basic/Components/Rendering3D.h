@@ -10,12 +10,13 @@ namespace Basic::Components
     class Rendering3D
     {
     public:
-        enum class ShaderType { SolidColor, PerlinNoise };
+        enum class ShaderType { SolidColor, PerlinNoise, ShaderTex };
 
         struct Vertex3D
         {
             float3 position;
             float3 normal;
+            float2 uv = {};
         };
 
         struct ObjectData
@@ -28,7 +29,8 @@ namespace Basic::Components
         void Construct(Engine::Render::Pipeline* pPipeline,
                        const std::vector<Vertex3D>& vertices,
                        const std::vector<int32>& indices,
-                       ShaderType shaderType = ShaderType::SolidColor);
+                       ShaderType shaderType = ShaderType::SolidColor,
+                       ID3D11ShaderResourceView* pTextureSRV = nullptr);
 
         void DrawInstanced(const std::vector<ObjectData>& instances);
 
@@ -44,6 +46,9 @@ namespace Basic::Components
         DXBuffer*                  pInstanceBuffer_   = nullptr;
         ID3D11ShaderResourceView*  pInstanceSRV_      = nullptr;
         DXRasterizerState*         pRasterizerState_  = nullptr;
+        ID3D11ShaderResourceView*  pTextureSRV_       = nullptr;
+        ID3D11SamplerState*        pSamplerState_     = nullptr;
+        ShaderType                 shaderType_        = ShaderType::SolidColor;
         int32                      indexCount_        = 0;
         int32                      instanceCapacity_  = 0;
     };

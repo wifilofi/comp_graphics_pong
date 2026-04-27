@@ -9,6 +9,7 @@
 #include <imgui.h>
 #include <commdlg.h>
 #include <WICTextureLoader.h>
+#include <filesystem>
 
 #include "../../Engine/Render/Pipeline.h"
 #include "../../Engine/Basic/Shapes/LowPolySphere.h"
@@ -230,14 +231,9 @@ void KatamariWorld::Render(float /*delta*/)
     if (!boxODs.empty())    boxPickupRenderer_.DrawInstanced(boxODs);
 
     // FBX pickups
-    if (!fbxPickups_.empty())
+    if (fbxMeshRenderer_ && !fbxPickups_.empty())
     {
-        const bool useTex = fbxRenderer_ && fbxRenderer_->IsValid();
-
-        using ODTex = Basic::Components::Rendering3DTex::ObjectData;
-        std::vector<ODTex> fbxTexODs;
-        std::vector<OD>    fbxSolidODs;
-
+        std::vector<OD> fbxODs;
         for (const auto& p : fbxPickups_)
         {
             float3   worldPos;
@@ -251,32 +247,14 @@ void KatamariWorld::Render(float /*delta*/)
             {
                 worldPos = float3(p.pos.x, p.radius, p.pos.z);
             }
-
-            const float4x4 model = (float4x4::CreateScale(p.radius) * rot *
-                                    float4x4::CreateTranslation(worldPos)).Transpose();
-
-            if (useTex)
-            {
-                ODTex od;
-                od.model  = model;
-                od.color  = float4(1.f, 1.f, 1.f, 1.f);
-                od.color2 = float4(0.f, 0.f, 0.f, 1.f);
-                fbxTexODs.push_back(od);
-            }
-            else
-            {
-                OD od;
-                od.model  = model;
-                od.color  = float4(0.8f, 0.5f, 0.2f, 1.f);
-                od.color2 = float4(0.4f, 0.25f, 0.1f, 1.f);
-                fbxSolidODs.push_back(od);
-            }
+            OD od;
+            od.model  = (float4x4::CreateScale(p.radius) * rot *
+                         float4x4::CreateTranslation(worldPos)).Transpose();
+            od.color  = float4(1.f, 1.f, 1.f, 1.f);
+            od.color2 = float4(0.f, 0.f, 0.f, 1.f);
+            fbxODs.push_back(od);
         }
-
-        if (useTex && !fbxTexODs.empty())
-            fbxRenderer_->DrawInstanced(fbxTexODs);
-        else if (fbxFallbackRenderer_ && !fbxSolidODs.empty())
-            fbxFallbackRenderer_->DrawInstanced(fbxSolidODs);
+        fbxMeshRenderer_->DrawInstanced(fbxODs);
     }
 }
 
@@ -340,8 +318,8 @@ void KatamariWorld::LoadMesh(const std::string& path)
 
     if (!scene || !scene->HasMeshes()) return;
 
-    using Vtx = Basic::Components::Rendering3DTex::Vertex3DTex;
-    std::vector<Vtx>  verts;
+    using Vtx = Basic::Components::Rendering3D::Vertex3D;
+    std::vector<Vtx>   verts;
     std::vector<int32> indices;
 
     const aiMesh* mesh = scene->mMeshes[0];
@@ -381,14 +359,10 @@ void KatamariWorld::LoadMesh(const std::string& path)
 
     if (verts.empty() || indices.empty()) return;
 
-    // Find tex_<stem>.png next to the mesh file
-    std::string texPath;
-    {
-        const std::string stem = path.substr(path.find_last_of("/\\") + 1);
-        const std::string dir  = path.substr(0, path.find_last_of("/\\") + 1);
-        const std::string base = stem.substr(0, stem.find_last_of('.'));
-        texPath = dir + "tex_" + base + ".png";
-    }
+    // tex_<stem>.png next to the mesh file
+    namespace fs = std::filesystem;
+    const fs::path meshPath(path);
+    const std::string texPath = (meshPath.parent_path() / ("tex_" + meshPath.stem().string() + ".png")).string();
 
     // Load texture (fallback: 1x1 white)
     ID3D11ShaderResourceView* pSRV = nullptr;
@@ -399,7 +373,7 @@ void KatamariWorld::LoadMesh(const std::string& path)
     }
     if (!pSRV)
     {
-        const uint32 white = 0xFFFFFFFF;
+        constexpr uint32 white = 0xFFFFFFFF;
         D3D11_TEXTURE2D_DESC td = {};
         td.Width = td.Height = 1;
         td.MipLevels = td.ArraySize = 1;
@@ -420,25 +394,9 @@ void KatamariWorld::LoadMesh(const std::string& path)
     if (fbxTexSRV_) { fbxTexSRV_->Release(); fbxTexSRV_ = nullptr; }
     fbxTexSRV_ = pSRV;
 
-    fbxRenderer_ = std::make_unique<Basic::Components::Rendering3DTex>();
-    fbxRenderer_->Construct(pPipeline_, verts, indices, fbxTexSRV_);
-
-    // Build position-only fallback (PerlinNoise shader, no UV needed)
-    {
-        using Vtx3 = Basic::Components::Rendering3D::Vertex3D;
-        std::vector<Vtx3> fverts;
-        fverts.reserve(verts.size());
-        for (const auto& v : verts)
-        {
-            Vtx3 fv;
-            fv.position = v.position;
-            fv.normal   = v.normal;
-            fverts.push_back(fv);
-        }
-        fbxFallbackRenderer_ = std::make_unique<Basic::Components::Rendering3D>();
-        fbxFallbackRenderer_->Construct(pPipeline_, fverts, indices,
-            Basic::Components::Rendering3D::ShaderType::PerlinNoise);
-    }
+    fbxMeshRenderer_ = std::make_unique<Basic::Components::Rendering3D>();
+    fbxMeshRenderer_->Construct(pPipeline_, verts, indices,
+        Basic::Components::Rendering3D::ShaderType::ShaderTex, fbxTexSRV_);
 
     // Spawn 5 instances scattered on the plane
     fbxPickups_.clear();

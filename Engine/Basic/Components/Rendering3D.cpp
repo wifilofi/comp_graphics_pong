@@ -7,51 +7,108 @@
 
 using namespace Basic::Components;
 
+static const char kShaderTex3D[] = R"hlsl(
+struct ObjectData { float4x4 model; float4 color; float4 color2; };
+StructuredBuffer<ObjectData> instances : register(t0);
+Texture2D    mainTex  : register(t1);
+SamplerState sampler0 : register(s0);
+cbuffer CameraBuffer : register(b2) { float4x4 view; float4x4 projection; };
+struct VS_IN  { float3 pos:POSITION0; float3 normal:NORMAL0; float2 uv:TEXCOORD0; };
+struct PS_IN  { float4 pos:SV_POSITION; float2 uv:TEXCOORD0; float4 color:COLOR0; };
+PS_IN VSMain(VS_IN i, uint id:SV_InstanceID) {
+    ObjectData o = instances[id]; PS_IN r;
+    r.pos   = mul(mul(float4(i.pos,1), o.model), mul(view, projection));
+    r.uv    = i.uv; r.color = o.color; return r; }
+float4 PSMain(PS_IN i):SV_Target { return mainTex.Sample(sampler0,i.uv)*i.color; }
+)hlsl";
+
 void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
                             const std::vector<Vertex3D>& vertices,
                             const std::vector<int32>& indices,
-                            ShaderType shaderType)
+                            ShaderType shaderType,
+                            ID3D11ShaderResourceView* pTextureSRV)
 {
-    pPipeline_  = pPipeline;
-    indexCount_ = static_cast<int32>(indices.size());
+    pPipeline_   = pPipeline;
+    shaderType_  = shaderType;
+    pTextureSRV_ = pTextureSRV;
+    indexCount_  = static_cast<int32>(indices.size());
     auto* device = pPipeline_->GetDevice();
 
-    static DXVertexShader* s_pVS[2]     = {};
-    static DXPixelShader*  s_pPS[2]     = {};
-    static DXInputLayout*  s_pLayout[2] = {};
+    static DXVertexShader* s_pVS[3]     = {};
+    static DXPixelShader*  s_pPS[3]     = {};
+    static DXInputLayout*  s_pLayout[3] = {};
 
     const int idx = static_cast<int>(shaderType);
 
     if (!s_pVS[idx])
     {
-        const wchar_t* file = (shaderType == ShaderType::PerlinNoise)
-            ? L"././Shaders/ShaderNoise3D.hlsl"
-            : L"././Shaders/ShaderTex3D.hlsl";
-
         DXBlob* pVSBlob = nullptr;
+        DXBlob* pPSBlob = nullptr;
         DXBlob* pError  = nullptr;
-        D3DCompileFromFile(file, nullptr, nullptr,
-                           "VSMain", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-                           0, &pVSBlob, &pError);
+
+        if (shaderType == ShaderType::ShaderTex)
+        {
+            D3DCompile(kShaderTex3D, sizeof(kShaderTex3D) - 1, nullptr, nullptr, nullptr,
+                       "VSMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pVSBlob, &pError);
+            if (pError) { pError->Release(); pError = nullptr; }
+            if (!pVSBlob) return;
+
+            D3DCompile(kShaderTex3D, sizeof(kShaderTex3D) - 1, nullptr, nullptr, nullptr,
+                       "PSMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pPSBlob, &pError);
+            if (pError) { pError->Release(); pError = nullptr; }
+        }
+        else
+        {
+            const wchar_t* file = (shaderType == ShaderType::PerlinNoise)
+                ? L"././Shaders/ShaderNoise3D.hlsl"
+                : L"././Shaders/Shader3D.hlsl";
+
+            D3DCompileFromFile(file, nullptr, nullptr,
+                               "VSMain", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+                               0, &pVSBlob, &pError);
+            if (pError) { pError->Release(); pError = nullptr; }
+            if (!pVSBlob) return;
+
+            D3DCompileFromFile(file, nullptr, nullptr,
+                               "PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+                               0, &pPSBlob, &pError);
+            if (pError) { pError->Release(); pError = nullptr; }
+        }
+
+        if (!pVSBlob) return;
         device->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(),
                                    nullptr, &s_pVS[idx]);
+        if (pPSBlob)
+        {
+            device->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(),
+                                      nullptr, &s_pPS[idx]);
+            pPSBlob->Release();
+        }
 
-        DXBlob* pPSBlob = nullptr;
-        D3DCompileFromFile(file, nullptr, nullptr,
-                           "PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-                           0, &pPSBlob, &pError);
-        device->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(),
-                                  nullptr, &s_pPS[idx]);
+        if (shaderType == ShaderType::ShaderTex)
+        {
+            const D3D11_INPUT_ELEMENT_DESC layout[] = {
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+                { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+                { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            };
+            device->CreateInputLayout(layout, 3, pVSBlob->GetBufferPointer(),
+                                      pVSBlob->GetBufferSize(), &s_pLayout[idx]);
+        }
+        else
+        {
+            const D3D11_INPUT_ELEMENT_DESC layout[] = {
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+                { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            };
+            device->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(),
+                                      pVSBlob->GetBufferSize(), &s_pLayout[idx]);
+        }
 
-        const D3D11_INPUT_ELEMENT_DESC layout[] = {
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        };
-        device->CreateInputLayout(layout, 2, pVSBlob->GetBufferPointer(),
-                                  pVSBlob->GetBufferSize(), &s_pLayout[idx]);
         pVSBlob->Release();
-        if (pPSBlob) pPSBlob->Release();
     }
+
+    if (!s_pVS[idx] || !s_pPS[idx] || !s_pLayout[idx]) return;
 
     pVertexShader_ = s_pVS[idx];
     pPixelShader_  = s_pPS[idx];
@@ -73,16 +130,36 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     ibData.pSysMem = indices.data();
     device->CreateBuffer(&ibDesc, &ibData, &pIndexBuffer_);
 
-    static DXRasterizerState* s_pRasterizerState = nullptr;
-    if (!s_pRasterizerState)
+    static DXRasterizerState* s_pRastCull   = nullptr;
+    static DXRasterizerState* s_pRastNoCull = nullptr;
+
+    if (!s_pRastCull)
     {
-        CD3D11_RASTERIZER_DESC rastDesc = {};
-        rastDesc.FillMode = D3D11_FILL_SOLID;
-        rastDesc.CullMode = D3D11_CULL_BACK;
-        rastDesc.FrontCounterClockwise = FALSE;
-        device->CreateRasterizerState(&rastDesc, &s_pRasterizerState);
+        CD3D11_RASTERIZER_DESC desc(D3D11_DEFAULT);
+        desc.CullMode = D3D11_CULL_BACK;
+        device->CreateRasterizerState(&desc, &s_pRastCull);
     }
-    pRasterizerState_ = s_pRasterizerState;
+    if (!s_pRastNoCull)
+    {
+        CD3D11_RASTERIZER_DESC desc(D3D11_DEFAULT);
+        desc.CullMode = D3D11_CULL_NONE;
+        device->CreateRasterizerState(&desc, &s_pRastNoCull);
+    }
+    pRasterizerState_ = (shaderType == ShaderType::ShaderTex) ? s_pRastNoCull : s_pRastCull;
+
+    if (shaderType == ShaderType::ShaderTex)
+    {
+        static ID3D11SamplerState* s_pSampler = nullptr;
+        if (!s_pSampler)
+        {
+            D3D11_SAMPLER_DESC sd = {};
+            sd.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+            sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+            sd.MaxLOD   = D3D11_FLOAT32_MAX;
+            device->CreateSamplerState(&sd, &s_pSampler);
+        }
+        pSamplerState_ = s_pSampler;
+    }
 }
 
 void Rendering3D::EnsureInstanceBuffer(int count)
@@ -114,7 +191,7 @@ void Rendering3D::EnsureInstanceBuffer(int count)
 
 void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
 {
-    if (instances.empty()) return;
+    if (!pVertexShader_ || instances.empty()) return;
 
     const int count = static_cast<int>(instances.size());
     EnsureInstanceBuffer(count);
@@ -127,6 +204,12 @@ void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
     ctx->Unmap(pInstanceBuffer_, 0);
 
     ctx->VSSetShaderResources(0, 1, &pInstanceSRV_);
+
+    if (shaderType_ == ShaderType::ShaderTex)
+    {
+        ctx->PSSetShaderResources(1, 1, &pTextureSRV_);
+        ctx->PSSetSamplers(0, 1, &pSamplerState_);
+    }
 
     constexpr UINT stride = sizeof(Vertex3D);
     constexpr UINT offset = 0;

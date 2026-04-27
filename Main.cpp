@@ -9,9 +9,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     auto *game = Game::Instance();
     game->Construct(L"Game of year", 0.01f);
 
-    auto *container = new Solar::SolarGameContainer();
+    //auto *container = new Solar::SolarGameContainer();
     //auto *container = new Pong::PongGameContainer();
-    //auto *container = new Katamari::KatamariGameContainer();
+    auto *container = new Katamari::KatamariGameContainer();
 
     container->Setup(game);
     game->Run();
