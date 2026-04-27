@@ -87,6 +87,8 @@ add_executable(${PROJECT_NAME} WIN32
         Game/Katamari/KatamariGameContainer.cpp
         Game/Katamari/KatamariWorld.h
         Game/Katamari/KatamariWorld.cpp
+        Engine/Basic/Components/Rendering3DTex.h
+        Engine/Basic/Components/Rendering3DTex.cpp
 )
 
 target_sources(${PROJECT_NAME}
@@ -183,5 +185,11 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 add_custom_target(copy_fonts ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/Game/Fonts $<TARGET_FILE_DIR:${PROJECT_NAME}>/Fonts
+    DEPENDS ${PROJECT_NAME}
+)
+
+add_custom_target(copy_katamari_mesh ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/Game/Katamari/Mesh $<TARGET_FILE_DIR:${PROJECT_NAME}>/Mesh
     DEPENDS ${PROJECT_NAME}
 )

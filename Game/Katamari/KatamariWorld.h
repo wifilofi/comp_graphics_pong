@@ -8,6 +8,7 @@
 #include "../../Engine/Update/FixedAble.h"
 #include "../../Engine/Input/Device.h"
 #include "../../Engine/Basic/Components/Rendering3D.h"
+#include "../../Engine/Basic/Components/Rendering3DTex.h"
 #include "../../Engine/Render/OrbitalCamera.h"
 #include "../../Engine/Lib/Types.h"
 
@@ -33,7 +34,7 @@ namespace Katamari
             float4 color, color2;
             bool   isSphere;
             bool   absorbed   = false;
-            float3 localOffset;  // ball-local space (set on absorb)
+            float3 localOffset;
         };
 
         struct FbxPickup {
@@ -43,17 +44,27 @@ namespace Katamari
             float3 localOffset;
         };
 
+        struct FbxMesh {
+            std::unique_ptr<Basic::Components::Rendering3DTex> renderer;
+            ID3D11ShaderResourceView*                          pTexSRV = nullptr;
+            std::vector<FbxPickup>                             pickups;
+            std::string                                        name;
+        };
+
         void SpawnPickups();
         void UpdateBall();
         void CheckCollisions();
         void AbsorbPickup(Pickup& p);
         void AbsorbFbxPickup(FbxPickup& p);
-        void LoadMesh(const std::string& path);
+        void LoadDefaultMeshes();
+        void LoadMeshWithTexture(const std::string& meshPath, const std::string& texPath);
         void OpenFileBrowser();
+        ID3D11ShaderResourceView* LoadTexture(const std::string& path);
+        ID3D11ShaderResourceView* CreateWhiteTexture();
 
-        Engine::Render::Pipeline*         pPipeline_ = nullptr;
-        Engine::Input::Device*            pDevice_   = nullptr;
-        Engine::Render::OrbitalCamera     camera_;
+        Engine::Render::Pipeline*      pPipeline_ = nullptr;
+        Engine::Input::Device*         pDevice_   = nullptr;
+        Engine::Render::OrbitalCamera  camera_;
 
         float3   ballPos_    = {0.f, 0.f, 0.f};
         float    ballRadius_ = 1.5f;
@@ -66,10 +77,8 @@ namespace Katamari
         Basic::Components::Rendering3D spherePickupRenderer_;
         Basic::Components::Rendering3D boxPickupRenderer_;
 
-        std::unique_ptr<Basic::Components::Rendering3D> fbxRenderer_;
-
-        std::vector<Pickup>    pickups_;
-        std::vector<FbxPickup> fbxPickups_;
+        std::vector<Pickup>   pickups_;
+        std::vector<FbxMesh>  fbxMeshes_;
 
         char fbxPathBuf_[512] = {};
     };

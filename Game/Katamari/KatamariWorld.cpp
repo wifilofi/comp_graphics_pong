@@ -2,12 +2,13 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 
 #include <imgui.h>
 #include <commdlg.h>
+#include <WICTextureLoader.h>
 
 #include "../../Engine/Render/Pipeline.h"
 #include "../../Engine/Basic/Shapes/LowPolySphere.h"
@@ -18,7 +19,8 @@
 #include <assimp/postprocess.h>
 
 using namespace Katamari;
-using Keys    = Engine::Input::Keyboard::Keys;
+namespace fs = std::filesystem;
+using Keys   = Engine::Input::Keyboard::Keys;
 
 static constexpr float kFov       = 60.f;
 static constexpr float kAspect    = 750.f / 500.f;
@@ -52,6 +54,7 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
     boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::PerlinNoise);
 
     SpawnPickups();
+    LoadDefaultMeshes();
 }
 
 // ---- Spawn -------------------------------------------------------------------
@@ -89,6 +92,131 @@ void KatamariWorld::SpawnPickups()
     }
 }
 
+// ---- Mesh loading ------------------------------------------------------------
+
+void KatamariWorld::LoadDefaultMeshes()
+{
+    const fs::path meshDir("Mesh");
+    if (!fs::exists(meshDir)) return;
+
+    for (const auto& entry : fs::directory_iterator(meshDir))
+    {
+        const fs::path& p = entry.path();
+        const std::string ext = p.extension().string();
+        if (ext != ".fbx" && ext != ".obj" && ext != ".gltf" && ext != ".glb") continue;
+        
+        fs::path texPath = p; texPath.replace_extension(".png");
+        if (!fs::exists(texPath))
+            texPath = p.parent_path() / (p.stem().string() + "_tex.png");
+        if (!fs::exists(texPath))
+            texPath.clear();
+
+        LoadMeshWithTexture(p.string(), texPath.empty() ? "" : texPath.string());
+    }
+}
+
+ID3D11ShaderResourceView* KatamariWorld::LoadTexture(const std::string& path)
+{
+    if (path.empty()) return CreateWhiteTexture();
+
+    std::wstring wpath(path.begin(), path.end());
+    ID3D11ShaderResourceView* pSRV = nullptr;
+    // Pass nullptr context to skip mip generation (avoids deferred-context issues during init)
+    HRESULT hr = DirectX::CreateWICTextureFromFile(
+        pPipeline_->GetDevice(), nullptr, wpath.c_str(), nullptr, &pSRV);
+    return (SUCCEEDED(hr) && pSRV) ? pSRV : CreateWhiteTexture();
+}
+
+ID3D11ShaderResourceView* KatamariWorld::CreateWhiteTexture()
+{
+    const uint32 white = 0xFFFFFFFF;
+    D3D11_TEXTURE2D_DESC desc = {};
+    desc.Width            = desc.Height = 1;
+    desc.MipLevels        = desc.ArraySize = 1;
+    desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.Usage            = D3D11_USAGE_DEFAULT;
+    desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
+    D3D11_SUBRESOURCE_DATA data = { &white, 4, 0 };
+    ID3D11Texture2D* pTex = nullptr;
+    pPipeline_->GetDevice()->CreateTexture2D(&desc, &data, &pTex);
+    ID3D11ShaderResourceView* pSRV = nullptr;
+    pPipeline_->GetDevice()->CreateShaderResourceView(pTex, nullptr, &pSRV);
+    pTex->Release();
+    return pSRV;
+}
+
+void KatamariWorld::LoadMeshWithTexture(const std::string& meshPath, const std::string& texPath)
+{
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(meshPath,
+        aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+        aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs);
+
+    if (!scene || !scene->HasMeshes()) return;
+
+    std::vector<Basic::Components::Rendering3DTex::Vertex3DTex> verts;
+    std::vector<int32> indices;
+
+    const aiMesh* mesh = scene->mMeshes[0];
+    verts.reserve(mesh->mNumVertices);
+
+    float maxExtent = 0.f;
+    for (unsigned i = 0; i < mesh->mNumVertices; ++i)
+    {
+        const auto& v = mesh->mVertices[i];
+        if (fabsf(v.x) > maxExtent) maxExtent = fabsf(v.x);
+        if (fabsf(v.y) > maxExtent) maxExtent = fabsf(v.y);
+        if (fabsf(v.z) > maxExtent) maxExtent = fabsf(v.z);
+    }
+
+    for (unsigned i = 0; i < mesh->mNumVertices; ++i)
+    {
+        Basic::Components::Rendering3DTex::Vertex3DTex v;
+        const float s = (maxExtent > 0.f) ? 1.f / maxExtent : 1.f;
+        v.position = float3(mesh->mVertices[i].x * s,
+                            mesh->mVertices[i].y * s,
+                            mesh->mVertices[i].z * s);
+        v.normal   = mesh->HasNormals()
+                   ? float3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z)
+                   : float3(0.f, 1.f, 0.f);
+        v.uv       = (mesh->HasTextureCoords(0))
+                   ? float2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y)
+                   : float2(0.f, 0.f);
+        verts.push_back(v);
+    }
+
+    for (unsigned i = 0; i < mesh->mNumFaces; ++i)
+    {
+        const aiFace& face = mesh->mFaces[i];
+        for (unsigned j = 0; j < face.mNumIndices; ++j)
+            indices.push_back(static_cast<int32>(face.mIndices[j]));
+    }
+
+    if (verts.empty() || indices.empty()) return;
+
+    FbxMesh fm;
+    fm.name    = fs::path(meshPath).stem().string();
+    fm.pTexSRV = LoadTexture(texPath);
+    fm.renderer = std::make_unique<Basic::Components::Rendering3DTex>();
+    fm.renderer->Construct(pPipeline_, verts, indices, fm.pTexSRV);
+
+    // Spawn instances scattered on plane
+    const unsigned seed = static_cast<unsigned>(fbxMeshes_.size() * 17 + 3);
+    srand(seed);
+    for (int i = 0; i < 4; ++i)
+    {
+        FbxPickup p;
+        p.pos.x  = (rand() % 6000 - 3000) / 100.f;
+        p.pos.z  = (rand() % 6000 - 3000) / 100.f;
+        p.radius = 0.7f + (rand() % 120) / 100.f;
+        p.pos.y  = p.radius;
+        fm.pickups.push_back(p);
+    }
+
+    fbxMeshes_.push_back(std::move(fm));
+}
+
 // ---- FixedUpdate -------------------------------------------------------------
 
 void KatamariWorld::FixedUpdate()
@@ -107,11 +235,17 @@ void KatamariWorld::UpdateBall()
     if (pDevice_->IsKeyDown(Keys::A)) ax -= kAccel;
     if (pDevice_->IsKeyDown(Keys::D)) ax += kAccel;
 
-    ballVel_.x = std::clamp(ballVel_.x + ax, -kMaxSpeed, kMaxSpeed) * kFriction;
-    ballVel_.z = std::clamp(ballVel_.z + az, -kMaxSpeed, kMaxSpeed) * kFriction;
+    ballVel_.x = (ballVel_.x + ax < -kMaxSpeed ? -kMaxSpeed : ballVel_.x + ax > kMaxSpeed ? kMaxSpeed : ballVel_.x + ax) * kFriction;
+    ballVel_.z = (ballVel_.z + az < -kMaxSpeed ? -kMaxSpeed : ballVel_.z + az > kMaxSpeed ? kMaxSpeed : ballVel_.z + az) * kFriction;
 
-    ballPos_.x = std::clamp(ballPos_.x + ballVel_.x, -kPlaneHalf + ballRadius_, kPlaneHalf - ballRadius_);
-    ballPos_.z = std::clamp(ballPos_.z + ballVel_.z, -kPlaneHalf + ballRadius_, kPlaneHalf - ballRadius_);
+    const float minX = -kPlaneHalf + ballRadius_, maxX = kPlaneHalf - ballRadius_;
+    const float minZ = -kPlaneHalf + ballRadius_, maxZ = kPlaneHalf - ballRadius_;
+    ballPos_.x += ballVel_.x;
+    ballPos_.z += ballVel_.z;
+    if (ballPos_.x < minX) ballPos_.x = minX;
+    if (ballPos_.x > maxX) ballPos_.x = maxX;
+    if (ballPos_.z < minZ) ballPos_.z = minZ;
+    if (ballPos_.z > maxZ) ballPos_.z = maxZ;
 
     const float speed = sqrtf(ballVel_.x * ballVel_.x + ballVel_.z * ballVel_.z);
     if (speed > 0.0005f)
@@ -133,18 +267,19 @@ void KatamariWorld::CheckCollisions()
     {
         if (p.absorbed) continue;
         const float3 pickupCenter(p.pos.x, p.radius, p.pos.z);
-        const float  dist = (ballCenter - pickupCenter).Length();
-        if (dist < ballRadius_ + p.radius && ballRadius_ >= p.radius)
+        if ((ballCenter - pickupCenter).Length() < ballRadius_ + p.radius && ballRadius_ >= p.radius)
             AbsorbPickup(p);
     }
 
-    for (auto& p : fbxPickups_)
+    for (auto& fm : fbxMeshes_)
     {
-        if (p.absorbed) continue;
-        const float3 pickupCenter(p.pos.x, p.radius, p.pos.z);
-        const float  dist = (ballCenter - pickupCenter).Length();
-        if (dist < ballRadius_ + p.radius && ballRadius_ >= p.radius)
-            AbsorbFbxPickup(p);
+        for (auto& p : fm.pickups)
+        {
+            if (p.absorbed) continue;
+            const float3 pickupCenter(p.pos.x, p.radius, p.pos.z);
+            if ((ballCenter - pickupCenter).Length() < ballRadius_ + p.radius && ballRadius_ >= p.radius)
+                AbsorbFbxPickup(p);
+        }
     }
 }
 
@@ -172,11 +307,12 @@ void KatamariWorld::AbsorbFbxPickup(FbxPickup& p)
 
 void KatamariWorld::Render(float /*delta*/)
 {
-    using OD = Basic::Components::Rendering3D::ObjectData;
+    using OD3D  = Basic::Components::Rendering3D::ObjectData;
+    using ODTex = Basic::Components::Rendering3DTex::ObjectData;
 
     // Plane
     {
-        OD od;
+        OD3D od;
         od.model  = (float4x4::CreateScale(kPlaneHalf, 0.2f, kPlaneHalf) *
                      float4x4::CreateTranslation(0.f, -0.1f, 0.f)).Transpose();
         od.color  = float4(0.35f, 0.55f, 0.25f, 1);
@@ -187,7 +323,7 @@ void KatamariWorld::Render(float /*delta*/)
     // Ball
     {
         const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
-        OD od;
+        OD3D od;
         od.model  = (float4x4::CreateScale(ballRadius_) *
                      rollMatrix_ *
                      float4x4::CreateTranslation(ballCenter)).Transpose();
@@ -196,31 +332,25 @@ void KatamariWorld::Render(float /*delta*/)
         ballRenderer_.DrawInstanced({od});
     }
 
-    // Pickups (absorbed + free)
+    // Procedural pickups
     const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
-    std::vector<OD> sphereODs, boxODs;
+    std::vector<OD3D> sphereODs, boxODs;
 
     for (const auto& p : pickups_)
     {
         float3   worldPos;
         float4x4 rot = float4x4::Identity;
-
-        if (p.absorbed)
-        {
+        if (p.absorbed) {
             worldPos = ballCenter + float3::TransformNormal(p.localOffset, rollMatrix_);
             rot      = rollMatrix_;
-        }
-        else
-        {
+        } else {
             worldPos = float3(p.pos.x, p.radius, p.pos.z);
         }
-
-        OD od;
+        OD3D od;
         od.model  = (float4x4::CreateScale(p.radius) * rot *
                      float4x4::CreateTranslation(worldPos)).Transpose();
         od.color  = p.color;
         od.color2 = p.color2;
-
         if (p.isSphere) sphereODs.push_back(od);
         else            boxODs.push_back(od);
     }
@@ -228,31 +358,30 @@ void KatamariWorld::Render(float /*delta*/)
     if (!sphereODs.empty()) spherePickupRenderer_.DrawInstanced(sphereODs);
     if (!boxODs.empty())    boxPickupRenderer_.DrawInstanced(boxODs);
 
-    // FBX pickups
-    if (fbxRenderer_ && !fbxPickups_.empty())
+    // FBX mesh pickups
+    for (auto& fm : fbxMeshes_)
     {
-        std::vector<OD> fbxODs;
-        for (const auto& p : fbxPickups_)
+        if (!fm.renderer) continue;
+        std::vector<ODTex> fbxODs;
+        for (const auto& p : fm.pickups)
         {
             float3   worldPos;
             float4x4 rot = float4x4::Identity;
-            if (p.absorbed)
-            {
+            if (p.absorbed) {
                 worldPos = ballCenter + float3::TransformNormal(p.localOffset, rollMatrix_);
                 rot      = rollMatrix_;
-            }
-            else
-            {
+            } else {
                 worldPos = float3(p.pos.x, p.radius, p.pos.z);
             }
-            OD od;
+            ODTex od;
             od.model  = (float4x4::CreateScale(p.radius) * rot *
                          float4x4::CreateTranslation(worldPos)).Transpose();
-            od.color  = float4(0.85f, 0.62f, 0.30f, 1);
-            od.color2 = float4(0.30f, 0.18f, 0.08f, 1);
+            od.color  = float4(1.f, 1.f, 1.f, 1.f);
+            od.color2 = float4(0.f, 0.f, 0.f, 1.f);
             fbxODs.push_back(od);
         }
-        fbxRenderer_->DrawInstanced(fbxODs);
+        if (!fbxODs.empty())
+            fm.renderer->DrawInstanced(fbxODs);
     }
 }
 
@@ -260,15 +389,15 @@ void KatamariWorld::Render(float /*delta*/)
 
 void KatamariWorld::RenderUI()
 {
-    ImGui::Begin("Katamari");
+    int totalPickups = static_cast<int>(pickups_.size());
+    for (const auto& fm : fbxMeshes_) totalPickups += static_cast<int>(fm.pickups.size());
 
+    ImGui::Begin("Katamari");
     ImGui::Text("Ball radius: %.2f", ballRadius_);
-    ImGui::Text("Absorbed: %d / %d", absorbedCount_,
-                static_cast<int>(pickups_.size() + fbxPickups_.size()));
+    ImGui::Text("Absorbed: %d / %d", absorbedCount_, totalPickups);
     ImGui::Text("WASD move  |  RMB+drag orbit  |  Q/E zoom");
 
     ImGui::Separator();
-
     if (ImGui::Button("Reset"))
     {
         ballPos_       = float3(0, 0, 0);
@@ -277,17 +406,29 @@ void KatamariWorld::RenderUI()
         rollMatrix_    = float4x4::Identity;
         absorbedCount_ = 0;
         SpawnPickups();
-        fbxPickups_.clear();
+        for (auto& fm : fbxMeshes_)
+            for (auto& p : fm.pickups)
+                p.absorbed = false;
     }
 
     ImGui::Separator();
-    ImGui::Text("Import 3D mesh (FBX / OBJ / GLTF ...):");
+    ImGui::Text("Loaded meshes:");
+    for (const auto& fm : fbxMeshes_)
+        ImGui::BulletText("%s (%d instances)", fm.name.c_str(), static_cast<int>(fm.pickups.size()));
+
+    ImGui::Separator();
+    ImGui::Text("Import additional mesh:");
     ImGui::InputText("##fbxpath", fbxPathBuf_, sizeof(fbxPathBuf_));
     ImGui::SameLine();
     if (ImGui::Button("Browse"))
         OpenFileBrowser();
     if (ImGui::Button("Load & Spawn"))
-        LoadMesh(std::string(fbxPathBuf_));
+    {
+        fs::path mp(fbxPathBuf_);
+        fs::path tp = mp; tp.replace_extension(".png");
+        if (!fs::exists(tp)) tp = mp.parent_path() / (mp.stem().string() + "_tex.png");
+        LoadMeshWithTexture(fbxPathBuf_, fs::exists(tp) ? tp.string() : "");
+    }
 
     ImGui::End();
 }
@@ -297,77 +438,10 @@ void KatamariWorld::OpenFileBrowser()
     char buf[MAX_PATH] = {};
     OPENFILENAMEA ofn  = {};
     ofn.lStructSize    = sizeof(ofn);
-    ofn.lpstrFilter    = "3D Models\0*.fbx;*.obj;*.gltf;*.glb;*.dae;*.3ds\0All Files\0*.*\0";
+    ofn.lpstrFilter    = "3D Models\0*.fbx;*.obj;*.gltf;*.glb;*.dae\0All Files\0*.*\0";
     ofn.lpstrFile      = buf;
     ofn.nMaxFile       = MAX_PATH;
     ofn.Flags          = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
     if (GetOpenFileNameA(&ofn))
         strncpy_s(fbxPathBuf_, buf, sizeof(fbxPathBuf_) - 1);
-}
-
-void KatamariWorld::LoadMesh(const std::string& path)
-{
-    if (path.empty()) return;
-
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path,
-        aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
-
-    if (!scene || !scene->HasMeshes()) return;
-
-    std::vector<Basic::Components::Rendering3D::Vertex3D> verts;
-    std::vector<int32> indices;
-
-    const aiMesh* mesh = scene->mMeshes[0];
-    verts.reserve(mesh->mNumVertices);
-
-    // Compute mesh AABB for auto-scale
-    float maxExtent = 0.f;
-    for (unsigned i = 0; i < mesh->mNumVertices; ++i)
-    {
-        const auto& v = mesh->mVertices[i];
-        if (fabsf(v.x) > maxExtent) maxExtent = fabsf(v.x);
-        if (fabsf(v.y) > maxExtent) maxExtent = fabsf(v.y);
-        if (fabsf(v.z) > maxExtent) maxExtent = fabsf(v.z);
-
-        Basic::Components::Rendering3D::Vertex3D vert;
-        vert.position = float3(v.x, v.y, v.z);
-        vert.normal   = mesh->HasNormals()
-                      ? float3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z)
-                      : float3(0.f, 1.f, 0.f);
-        verts.push_back(vert);
-    }
-
-    for (unsigned i = 0; i < mesh->mNumFaces; ++i)
-    {
-        const aiFace& face = mesh->mFaces[i];
-        for (unsigned j = 0; j < face.mNumIndices; ++j)
-            indices.push_back(static_cast<int32>(face.mIndices[j]));
-    }
-
-    if (verts.empty() || indices.empty()) return;
-
-    // Normalize verts to unit sphere (scale handled by radius in instance data)
-    if (maxExtent > 0.f)
-    {
-        for (auto& v : verts)
-            v.position /= maxExtent;
-    }
-
-    fbxRenderer_ = std::make_unique<Basic::Components::Rendering3D>();
-    fbxRenderer_->Construct(pPipeline_, verts, indices,
-                            Basic::Components::Rendering3D::ShaderType::PerlinNoise);
-
-    // Spawn 5 instances scattered on the plane
-    const unsigned seed = static_cast<unsigned>(fbxPickups_.size() * 17 + 3);
-    srand(seed);
-    for (int i = 0; i < 5; ++i)
-    {
-        FbxPickup p;
-        p.pos.x  = (rand() % 6000 - 3000) / 100.f;
-        p.pos.z  = (rand() % 6000 - 3000) / 100.f;
-        p.radius = 0.7f + (rand() % 120) / 100.f;
-        p.pos.y  = p.radius;
-        fbxPickups_.push_back(p);
-    }
 }
