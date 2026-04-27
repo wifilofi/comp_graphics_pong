@@ -116,7 +116,8 @@ void KatamariWorld::UpdateBall()
     const float speed = sqrtf(ballVel_.x * ballVel_.x + ballVel_.z * ballVel_.z);
     if (speed > 0.0005f)
     {
-        float3 moveDir = float3::Normalize(float3(ballVel_.x, 0.f, ballVel_.z));
+        float3 moveDir(ballVel_.x, 0.f, ballVel_.z);
+        moveDir.Normalize();
         float3 rollAxis(-moveDir.z, 0.f, moveDir.x);
         rollAxis.Normalize();
         const float angle = speed / ballRadius_;
@@ -325,9 +326,9 @@ void KatamariWorld::LoadMesh(const std::string& path)
     for (unsigned i = 0; i < mesh->mNumVertices; ++i)
     {
         const auto& v = mesh->mVertices[i];
-        maxExtent = std::max(maxExtent, fabsf(v.x));
-        maxExtent = std::max(maxExtent, fabsf(v.y));
-        maxExtent = std::max(maxExtent, fabsf(v.z));
+        if (fabsf(v.x) > maxExtent) maxExtent = fabsf(v.x);
+        if (fabsf(v.y) > maxExtent) maxExtent = fabsf(v.y);
+        if (fabsf(v.z) > maxExtent) maxExtent = fabsf(v.z);
 
         Basic::Components::Rendering3D::Vertex3D vert;
         vert.position = float3(v.x, v.y, v.z);
