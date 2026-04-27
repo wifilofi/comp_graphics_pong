@@ -29,29 +29,28 @@ namespace Solar
             float      orbitAngleOffset = 0.f;
         };
 
-        void Construct(Engine::Render::Pipeline* pPipeline, const Params& params,
-                       const SolarBody* parent = nullptr);
+        void Construct(const Params& params, const SolarBody* parent = nullptr);
 
         void FixedUpdate();
-        void Render(float delta);
 
-        float3 GetPosition() const { return position_; }
+        Basic::Components::Rendering3D::ObjectData GetInstanceData() const;
+        ShapeType GetShape()    const { return shape_; }
+        float3    GetPosition() const { return position_; }
 
     private:
         float4x4 ComputeModelMatrix() const;
 
-        Basic::Components::Rendering3D rendering_;
-
-        const SolarBody* parent_    = nullptr;
-        float3           position_  = float3(0, 0, 0);
-        float            scale_     = 1.f;
-        float4           color_     = float4(1, 1, 1, 1);
-        float4           color2_    = float4(1, 1, 1, 1);
-        float            orbitRadius_     = 0.f;
-        float            orbitSpeed_      = 0.f;
-        float            orbitInclination_= 0.f;
-        float            orbitAngle_      = 0.f;
-        float            selfRotSpeed_    = 0.01f;
-        float            selfRotAngle_    = 0.f;
+        const SolarBody* parent_         = nullptr;
+        float3           position_       = float3(0, 0, 0);
+        float4           color_          = float4(1, 1, 1, 1);
+        float4           color2_         = float4(1, 1, 1, 1);
+        ShapeType        shape_          = ShapeType::Sphere;
+        float            scale_          = 1.f;
+        float            orbitRadius_    = 0.f;
+        float            orbitSpeed_     = 0.f;
+        float            orbitInclination_ = 0.f;
+        float            orbitAngle_     = 0.f;
+        float            selfRotSpeed_   = 0.01f;
+        float            selfRotAngle_   = 0.f;
     };
 }

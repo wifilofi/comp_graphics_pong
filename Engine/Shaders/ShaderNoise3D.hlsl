@@ -1,9 +1,11 @@
-cbuffer ObjectBuffer : register(b0)
+struct ObjectData
 {
     float4x4 model;
     float4   color;
     float4   color2;
 };
+
+StructuredBuffer<ObjectData> instances : register(t0);
 
 cbuffer FrameBuffer : register(b1)
 {
@@ -29,16 +31,21 @@ struct PS_IN
     float4 pos      : SV_POSITION;
     float3 normal   : NORMAL0;
     float3 localPos : TEXCOORD0;
+    float4 color    : COLOR0;
+    float4 color2   : COLOR1;
 };
 
-PS_IN VSMain(VS_IN input)
+PS_IN VSMain(VS_IN input, uint instanceID : SV_InstanceID)
 {
+    ObjectData obj = instances[instanceID];
     PS_IN output;
-    float4 worldPos  = mul(float4(input.pos, 1.0), model);
+    float4 worldPos  = mul(float4(input.pos, 1.0), obj.model);
     float4 viewPos   = mul(worldPos, view);
     output.pos       = mul(viewPos, projection);
-    output.normal    = normalize(mul(float4(input.normal, 0.0), model).xyz);
+    output.normal    = normalize(mul(float4(input.normal, 0.0), obj.model).xyz);
     output.localPos  = input.pos;
+    output.color     = obj.color;
+    output.color2    = obj.color2;
     return output;
 }
 
@@ -79,5 +86,5 @@ float4 PSMain(PS_IN input) : SV_Target
 {
     float n = fbm(input.localPos * 3.0f + time * 0.06f);
     float t = saturate(n * 2.2f - 0.4f);
-    return lerp(color, color2, t);
+    return lerp(input.color, input.color2, t);
 }

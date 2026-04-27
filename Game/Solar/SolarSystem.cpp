@@ -1,7 +1,10 @@
 #include "SolarSystem.h"
 
 #include "../../Engine/Render/Pipeline.h"
+#include "../../Engine/Basic/Shapes/Box.h"
+#include "../../Engine/Basic/Shapes/LowPolySphere.h"
 #include <imgui.h>
+
 using namespace Solar;
 using Keys    = Engine::Input::Keyboard::Keys;
 using Buttons = Engine::Input::Keyboard::Buttons;
@@ -21,14 +24,20 @@ void SolarSystem::Construct(Engine::Render::Pipeline* pPipeline)
 
     pDevice_->KeyboardEvent.AddRaw(this, &SolarSystem::OnKeyboard);
 
+    using ST = Basic::Components::Rendering3D::ShaderType;
+    sphereRenderer_.Construct(pPipeline_, Basic::Shapes::LowPolySphere::Vertices(),
+                                          Basic::Shapes::LowPolySphere::Indices(), ST::PerlinNoise);
+    boxRenderer_   .Construct(pPipeline_, Basic::Shapes::Box::Vertices(),
+                                          Basic::Shapes::Box::Indices(),            ST::PerlinNoise);
+
     BuildBodies();
 }
 
 void SolarSystem::BuildBodies()
 {
     using P = SolarBody::Params;
-    sun_.Construct(pPipeline_, P{ShapeType::Sphere, {1.0f,0.9f,0.1f,1}, {1.0f,0.5f,0.0f,1},
-                                 SolarBody::ShaderType::PerlinNoise, 3.f, 0, 0, 0, 0.003f});
+    sun_.Construct(P{ShapeType::Sphere, {1.0f,0.9f,0.1f,1}, {1.0f,0.5f,0.0f,1},
+                     SolarBody::ShaderType::PerlinNoise, 3.f, 0, 0, 0, 0.003f});
     SpawnPlanets(planetInput_);
 }
 
@@ -72,7 +81,7 @@ void SolarSystem::SpawnPlanets(int n)
         const float4& color2 = kColors2[i % 8];
         const ShapeType shape = (i % 4 == 1) ? ShapeType::Box : ShapeType::Sphere;
 
-        float incl       = 0.f;
+        float incl        = 0.f;
         float angleOffset = 0.f;
 
         if (formula_ == Formula::Spiral3D)
@@ -81,9 +90,9 @@ void SolarSystem::SpawnPlanets(int n)
             angleOffset = angleStep_ * i;
 
         auto body = std::make_unique<SolarBody>();
-        body->Construct(pPipeline_, P{shape, color, color2,
-                                      SolarBody::ShaderType::PerlinNoise,
-                                      scale, orbit, speed, incl, 0.007f, angleOffset}, &sun_);
+        body->Construct(P{shape, color, color2,
+                          SolarBody::ShaderType::PerlinNoise,
+                          scale, orbit, speed, incl, 0.007f, angleOffset}, &sun_);
         planets_.push_back(std::move(body));
     }
 }
@@ -97,10 +106,26 @@ void SolarSystem::FixedUpdate()
     else         orbCamera_.FixedUpdate();
 }
 
-void SolarSystem::Render(float delta)
+void SolarSystem::Render(float /*delta*/)
 {
-    sun_.Render(delta);
-    for (auto& p : planets_) p->Render(delta);
+    using OD = Basic::Components::Rendering3D::ObjectData;
+
+    std::vector<OD> sphereInstances;
+    std::vector<OD> boxInstances;
+
+    sphereInstances.push_back(sun_.GetInstanceData());
+
+    for (auto& p : planets_)
+    {
+        if (p->GetShape() == ShapeType::Sphere)
+            sphereInstances.push_back(p->GetInstanceData());
+        else
+            boxInstances.push_back(p->GetInstanceData());
+    }
+
+    sphereRenderer_.DrawInstanced(sphereInstances);
+    if (!boxInstances.empty())
+        boxRenderer_.DrawInstanced(boxInstances);
 }
 
 void SolarSystem::RenderUI()
@@ -111,7 +136,6 @@ void SolarSystem::RenderUI()
     if (planetInput_ < 1)    planetInput_ = 1;
     if (planetInput_ > 1000) planetInput_ = 1000;
 
-    // Formula selector
     int formulaIdx = (formula_ == Formula::Spiral2D) ? 1 : 0;
     if (ImGui::Combo("Formula", &formulaIdx, "3D Spiral\0""2D Spiral\0"))
         formula_ = (formulaIdx == 1) ? Formula::Spiral2D : Formula::Spiral3D;

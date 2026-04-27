@@ -30,18 +30,21 @@ namespace Basic::Components
                        const std::vector<int32>& indices,
                        ShaderType shaderType = ShaderType::SolidColor);
 
-        void Draw(const float4x4& model, const float4& color,
-                  const float4& color2 = float4(1, 1, 1, 1));
+        void DrawInstanced(const std::vector<ObjectData>& instances);
 
     private:
-        Engine::Render::Pipeline* pPipeline_ = nullptr;
-        DXVertexShader*    pVertexShader_  = nullptr;
-        DXPixelShader*     pPixelShader_   = nullptr;
-        DXInputLayout*     pInputLayout_   = nullptr;
-        DXBuffer*          pVertexBuffer_  = nullptr;
-        DXBuffer*          pIndexBuffer_   = nullptr;
-        DXBuffer*          pObjectBuffer_  = nullptr;
-        DXRasterizerState* pRasterizerState_ = nullptr;
-        int32              indexCount_     = 0;
+        void EnsureInstanceBuffer(int count);
+
+        Engine::Render::Pipeline*  pPipeline_        = nullptr;
+        DXVertexShader*            pVertexShader_     = nullptr;
+        DXPixelShader*             pPixelShader_      = nullptr;
+        DXInputLayout*             pInputLayout_      = nullptr;
+        DXBuffer*                  pVertexBuffer_     = nullptr;
+        DXBuffer*                  pIndexBuffer_      = nullptr;
+        DXBuffer*                  pInstanceBuffer_   = nullptr;
+        ID3D11ShaderResourceView*  pInstanceSRV_      = nullptr;
+        DXRasterizerState*         pRasterizerState_  = nullptr;
+        int32                      indexCount_        = 0;
+        int32                      instanceCapacity_  = 0;
     };
 }

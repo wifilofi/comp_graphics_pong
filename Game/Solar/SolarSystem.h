@@ -40,11 +40,14 @@ namespace Solar
 
         enum class Formula { Spiral3D, Spiral2D };
 
+        Basic::Components::Rendering3D              sphereRenderer_;
+        Basic::Components::Rendering3D              boxRenderer_;
+
         SolarBody                                   sun_;
         std::vector<std::unique_ptr<SolarBody>>     planets_;
         int                                         planetInput_ = 8;
         Formula                                     formula_     = Formula::Spiral3D;
-        float                                       inclStep_    = 0.35f; // 3D: tilt per planet (rad)
-        float                                       angleStep_   = 2.399f; // 2D: angle offset per planet (rad)
+        float                                       inclStep_    = 0.35f;
+        float                                       angleStep_   = 2.399f;
     };
 }

@@ -73,13 +73,6 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     ibData.pSysMem = indices.data();
     device->CreateBuffer(&ibDesc, &ibData, &pIndexBuffer_);
 
-    D3D11_BUFFER_DESC obDesc = {};
-    obDesc.Usage          = D3D11_USAGE_DYNAMIC;
-    obDesc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
-    obDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    obDesc.ByteWidth      = sizeof(ObjectData);
-    device->CreateBuffer(&obDesc, nullptr, &pObjectBuffer_);
-
     static DXRasterizerState* s_pRasterizerState = nullptr;
     if (!s_pRasterizerState)
     {
@@ -92,19 +85,48 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     pRasterizerState_ = s_pRasterizerState;
 }
 
-void Rendering3D::Draw(const float4x4& model, const float4& color, const float4& color2)
+void Rendering3D::EnsureInstanceBuffer(int count)
 {
+    if (count <= instanceCapacity_) return;
+
+    if (pInstanceSRV_)    { pInstanceSRV_->Release();    pInstanceSRV_    = nullptr; }
+    if (pInstanceBuffer_) { pInstanceBuffer_->Release(); pInstanceBuffer_ = nullptr; }
+
+    instanceCapacity_ = count;
+    auto* device = pPipeline_->GetDevice();
+
+    D3D11_BUFFER_DESC desc = {};
+    desc.Usage               = D3D11_USAGE_DYNAMIC;
+    desc.BindFlags           = D3D11_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags      = D3D11_CPU_ACCESS_WRITE;
+    desc.MiscFlags           = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    desc.StructureByteStride = sizeof(ObjectData);
+    desc.ByteWidth           = sizeof(ObjectData) * static_cast<UINT>(instanceCapacity_);
+    device->CreateBuffer(&desc, nullptr, &pInstanceBuffer_);
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format                  = DXGI_FORMAT_UNKNOWN;
+    srvDesc.ViewDimension           = D3D11_SRV_DIMENSION_BUFFER;
+    srvDesc.Buffer.FirstElement     = 0;
+    srvDesc.Buffer.NumElements      = static_cast<UINT>(instanceCapacity_);
+    device->CreateShaderResourceView(pInstanceBuffer_, &srvDesc, &pInstanceSRV_);
+}
+
+void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
+{
+    if (instances.empty()) return;
+
+    const int count = static_cast<int>(instances.size());
+    EnsureInstanceBuffer(count);
+
     auto* ctx = pPipeline_->GetDeviceContext();
 
     D3D11_MAPPED_SUBRESOURCE sub = {};
-    ctx->Map(pObjectBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub);
-    auto* pObj    = static_cast<ObjectData*>(sub.pData);
-    pObj->model   = model.Transpose();
-    pObj->color   = color;
-    pObj->color2  = color2;
-    ctx->Unmap(pObjectBuffer_, 0);
-    ctx->VSSetConstantBuffers(0, 1, &pObjectBuffer_);
-    ctx->PSSetConstantBuffers(0, 1, &pObjectBuffer_);
+    ctx->Map(pInstanceBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub);
+    memcpy(sub.pData, instances.data(), sizeof(ObjectData) * count);
+    ctx->Unmap(pInstanceBuffer_, 0);
+
+    ctx->VSSetShaderResources(0, 1, &pInstanceSRV_);
 
     constexpr UINT stride = sizeof(Vertex3D);
     constexpr UINT offset = 0;
@@ -115,5 +137,5 @@ void Rendering3D::Draw(const float4x4& model, const float4& color, const float4&
     ctx->IASetIndexBuffer(pIndexBuffer_, DXGI_FORMAT_R32_UINT, 0);
     ctx->VSSetShader(pVertexShader_, nullptr, 0);
     ctx->PSSetShader(pPixelShader_, nullptr, 0);
-    ctx->DrawIndexed(indexCount_, 0, 0);
+    ctx->DrawIndexedInstanced(static_cast<UINT>(indexCount_), static_cast<UINT>(count), 0, 0, 0);
 }

@@ -15,7 +15,4 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     container->Setup(game);
     game->Run();
     game->Destroy();
-
-
-
 }
