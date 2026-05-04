@@ -98,16 +98,20 @@ void KatamariWorld::FixedUpdate()
     UpdateBall();
     CheckCollisions();
     camera_.SetTarget(float3(ballPos_.x, ballRadius_, ballPos_.z));
-    camera_.FixedUpdate();
 }
 
 void KatamariWorld::UpdateBall()
 {
-    float ax = 0.f, az = 0.f;
-    if (pDevice_->IsKeyDown(Keys::W)) az -= kAccel;
-    if (pDevice_->IsKeyDown(Keys::S)) az += kAccel;
-    if (pDevice_->IsKeyDown(Keys::A)) ax -= kAccel;
-    if (pDevice_->IsKeyDown(Keys::D)) ax += kAccel;
+    const float3 fwd   = camera_.GetForwardDir();
+    const float3 right = camera_.GetRightDir();
+
+    float3 accel(0.f, 0.f, 0.f);
+    if (pDevice_->IsKeyDown(Keys::W)) accel += fwd   * kAccel;
+    if (pDevice_->IsKeyDown(Keys::S)) accel -= fwd   * kAccel;
+    if (pDevice_->IsKeyDown(Keys::A)) accel -= right * kAccel;
+    if (pDevice_->IsKeyDown(Keys::D)) accel += right * kAccel;
+
+    const float ax = accel.x, az = accel.z;
 
     ballVel_.x = std::clamp(ballVel_.x + ax, -kMaxSpeed, kMaxSpeed) * kFriction;
     ballVel_.z = std::clamp(ballVel_.z + az, -kMaxSpeed, kMaxSpeed) * kFriction;
@@ -267,7 +271,7 @@ void KatamariWorld::RenderUI()
     ImGui::Text("Ball radius: %.2f", ballRadius_);
     ImGui::Text("Absorbed: %d / %d", absorbedCount_,
                 static_cast<int>(pickups_.size() + fbxPickups_.size()));
-    ImGui::Text("WASD move  |  RMB+drag orbit  |  Q/E zoom");
+    ImGui::Text("WASD move  |  mouse look  |  scroll zoom");
 
     ImGui::Separator();
 

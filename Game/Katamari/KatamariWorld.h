@@ -8,7 +8,7 @@
 #include "../../Engine/Update/FixedAble.h"
 #include "../../Engine/Input/Device.h"
 #include "../../Engine/Basic/Components/Rendering3D.h"
-#include "../../Engine/Render/OrbitalCamera.h"
+#include "../../Engine/Render/ThirdPersonCamera.h"
 #include "../../Engine/Lib/Types.h"
 
 namespace Engine::Render { class Pipeline; }
@@ -53,7 +53,7 @@ namespace Katamari
 
         Engine::Render::Pipeline*         pPipeline_ = nullptr;
         Engine::Input::Device*            pDevice_   = nullptr;
-        Engine::Render::OrbitalCamera     camera_;
+        Engine::Render::ThirdPersonCamera  camera_;
 
         float3   ballPos_    = {0.f, 0.f, 0.f};
         float    ballRadius_ = 3.f;

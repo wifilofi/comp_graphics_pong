@@ -78,6 +78,8 @@ add_executable(${PROJECT_NAME} WIN32
         Game/Solar/SolarGameContainer.cpp
         Engine/Render/FirstPersonCamera.cpp
         Engine/Render/OrbitalCamera.cpp
+        Engine/Render/ThirdPersonCamera.h
+        Engine/Render/ThirdPersonCamera.cpp
         Game/Solar/SolarBody.cpp
         Game/Solar/SolarSystem.cpp
         Engine/Basic/Components/Rendering3D.cpp
