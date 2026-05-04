@@ -30,8 +30,9 @@ static constexpr float kAccel     = 0.015f;
 static constexpr float kFriction  = 0.92f;
 static constexpr float kMaxSpeed  = 0.35f;
 static constexpr float kPlaneHalf = 400.f;
+static constexpr float kJumpForce = 0.4f;
+static constexpr float kGravity   = 0.018f;
 
-// ---- Construct ---------------------------------------------------------------
 
 void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
 {
@@ -102,7 +103,7 @@ void KatamariWorld::FixedUpdate()
 {
     UpdateBall();
     CheckCollisions();
-    camera_.SetTarget(float3(ballPos_.x, ballRadius_, ballPos_.z));
+    camera_.SetTarget(float3(ballPos_.x, ballRadius_ + ballY_, ballPos_.z));
 }
 
 void KatamariWorld::UpdateBall()
@@ -123,6 +124,25 @@ void KatamariWorld::UpdateBall()
 
     ballPos_.x = std::clamp(ballPos_.x + ballVel_.x, -kPlaneHalf + ballRadius_, kPlaneHalf - ballRadius_);
     ballPos_.z = std::clamp(ballPos_.z + ballVel_.z, -kPlaneHalf + ballRadius_, kPlaneHalf - ballRadius_);
+
+    // jump
+    const bool spaceDown = pDevice_->IsKeyDown(Keys::Space);
+    if (spaceDown && !spaceWasDown_ && jumpsLeft_ > 0)
+    {
+        ballVelY_   = kJumpForce;
+        --jumpsLeft_;
+    }
+    spaceWasDown_ = spaceDown;
+
+    // gravity + vertical integration
+    ballVelY_ -= kGravity;
+    ballY_    += ballVelY_;
+    if (ballY_ <= 0.f)
+    {
+        ballY_     = 0.f;
+        ballVelY_  = 0.f;
+        jumpsLeft_ = 2;
+    }
 
     const float speed = sqrtf(ballVel_.x * ballVel_.x + ballVel_.z * ballVel_.z);
     if (speed > 0.0005f)
@@ -190,7 +210,7 @@ static bool SphereIntersectsMesh(float3 ballCenter, float ballRadius,
 
 void KatamariWorld::CheckCollisions()
 {
-    const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
+    const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
 
     for (auto& p : pickups_)
     {
@@ -217,7 +237,7 @@ void KatamariWorld::CheckCollisions()
 
 void KatamariWorld::AbsorbPickup(Pickup& p)
 {
-    const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
+    const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
     float3 dir = float3(p.pos.x, p.radius, p.pos.z) - ballCenter;
     dir.Normalize();
     const float3 worldOffset = dir * (ballRadius_ + p.radius);
@@ -229,7 +249,7 @@ void KatamariWorld::AbsorbPickup(Pickup& p)
 
 void KatamariWorld::AbsorbFbxPickup(FbxPickup& p)
 {
-    const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
+    const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
     float3 dir = float3(p.pos.x, p.radius, p.pos.z) - ballCenter;
     dir.Normalize();
     const float3 worldOffset = dir * (ballRadius_ + p.radius);
@@ -257,7 +277,7 @@ void KatamariWorld::Render(float /*delta*/)
 
     // Ball
     {
-        const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
+        const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
         OD od;
         od.model  = (float4x4::CreateScale(ballRadius_) *
                      rollMatrix_ *
@@ -268,7 +288,7 @@ void KatamariWorld::Render(float /*delta*/)
     }
 
     // Pickups (absorbed + free)
-    const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
+    const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
     std::vector<OD> sphereODs, boxODs;
 
     for (const auto& p : pickups_)
@@ -345,6 +365,9 @@ void KatamariWorld::RenderUI()
         ballPos_       = float3(0, 0, 0);
         ballVel_       = float3(0, 0, 0);
         ballRadius_    = 1.5f;
+        ballY_         = 0.f;
+        ballVelY_      = 0.f;
+        jumpsLeft_     = 2;
         rollMatrix_    = float4x4::Identity;
         absorbedCount_ = 0;
         SpawnPickups();

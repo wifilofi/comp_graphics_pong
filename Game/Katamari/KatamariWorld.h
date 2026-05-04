@@ -60,6 +60,10 @@ namespace Katamari
         float3   ballPos_    = {0.f, 0.f, 0.f};
         float    ballRadius_ = 3.f;
         float3   ballVel_    = {0.f, 0.f, 0.f};
+        float    ballVelY_   = 0.f;
+        float    ballY_      = 0.f;  // height above ground (0 = on ground)
+        int      jumpsLeft_  = 2;
+        bool     spaceWasDown_ = false;
         float4x4 rollMatrix_;
         int      absorbedCount_ = 0;
 
