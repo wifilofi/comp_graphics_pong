@@ -27,6 +27,7 @@ void Pipeline::Construct(PHandlerWindow pHandlerWindow, const Point& size)
     hwnd_ = pHandlerWindow;
     size_ = size;
     gameSize_ = size;
+    windowSize_ = size;
     viewport_.Width = static_cast<float>(size.x);
     viewport_.Height = static_cast<float>(size.y);
     viewport_.TopLeftX = 0;
@@ -84,30 +85,34 @@ void Pipeline::SetCamera(Camera* pCamera)
 
 void Pipeline::Render(float delta) const
 {
+    windowSize_ = { static_cast<LONG>(viewport_.TopLeftX * 2 + viewport_.Width),
+                    static_cast<LONG>(viewport_.TopLeftY * 2 + viewport_.Height) };
+
     pDeviceContext_->ClearState();
 
-    // scene renders to offscreen[0] when post-processing is active, else directly to backbuffer
+    constexpr float black[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    const float gameColor[] = {bgColor_.x, bgColor_.y, bgColor_.z, bgColor_.w};
+    const D3D11_RECT gameRect = {
+        static_cast<LONG>(viewport_.TopLeftX),
+        static_cast<LONG>(viewport_.TopLeftY),
+        static_cast<LONG>(viewport_.TopLeftX + viewport_.Width),
+        static_cast<LONG>(viewport_.TopLeftY + viewport_.Height)
+    };
+
     ID3D11RenderTargetView* sceneRTV = postProcesses_.empty() ? pRenderTargetView_ : pOffRTV_[0];
-    pDeviceContext_->OMSetRenderTargets(1, &sceneRTV, pDepthStencilView_);
+
+    // clear the RT the scene will render into
+    pDeviceContext_->ClearRenderTargetView(sceneRTV, black);
     pDeviceContext_->ClearDepthStencilView(pDepthStencilView_, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    // pillarbox
-    constexpr float black[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    pDeviceContext_->ClearRenderTargetView(pRenderTargetView_, black);
-
-    // #2c4b76 for the game area only
     ID3D11DeviceContext1* pContext1 = nullptr;
     pDeviceContext_->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&pContext1));
     if (pContext1)
     {
-        const float gameColor[] = {bgColor_.x, bgColor_.y, bgColor_.z, bgColor_.w};
-        const D3D11_RECT rect = {
-            static_cast<LONG>(viewport_.TopLeftX),
-            static_cast<LONG>(viewport_.TopLeftY),
-            static_cast<LONG>(viewport_.TopLeftX + viewport_.Width),
-            static_cast<LONG>(viewport_.TopLeftY + viewport_.Height)
-        };
-        pContext1->ClearView(pRenderTargetView_, gameColor, &rect, 1);
+        pContext1->ClearView(sceneRTV, gameColor, &gameRect, 1);
+        // when post-processing, also clear the backbuffer black for letterbox bars
+        if (!postProcesses_.empty())
+            pDeviceContext_->ClearRenderTargetView(pRenderTargetView_, black);
         pContext1->Release();
     }
 
@@ -155,6 +160,13 @@ void Pipeline::Render(float delta) const
     // post-process passes: ping-pong between offscreen[0/1], last pass → backbuffer
     if (!postProcesses_.empty())
     {
+        // full window viewport so the blit covers the entire backbuffer (including letterbox bars)
+        D3D11_VIEWPORT fullVP = {};
+        fullVP.Width    = static_cast<float>(windowSize_.x);
+        fullVP.Height   = static_cast<float>(windowSize_.y);
+        fullVP.MaxDepth = 1.f;
+        pDeviceContext_->RSSetViewports(1, &fullVP);
+
         pDeviceContext_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         pDeviceContext_->IASetInputLayout(nullptr);
         pDeviceContext_->VSSetShader(pFullscreenVS_, nullptr, 0);

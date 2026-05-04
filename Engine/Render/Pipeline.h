@@ -72,7 +72,8 @@ namespace Engine
             DXBlendState* pBlendState_ = nullptr;
             DXBuffer* pFrameDataBuffer_ = nullptr;
             DXBuffer* pCameraBuffer_ = nullptr;
-            mutable float time_ = 0.f;
+            mutable float time_       = 0.f;
+            mutable Point windowSize_ = {};
             float4 bgColor_ = {0x2c / 255.0f, 0x4b / 255.0f, 0x76 / 255.0f, 1.0f};
             std::vector<Renderer*> renderAbles_{};
             PHandlerWindow hwnd_ = nullptr;
