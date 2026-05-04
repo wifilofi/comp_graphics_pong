@@ -124,10 +124,10 @@ void KatamariWorld::UpdateBall()
     {
         float3 moveDir(ballVel_.x, 0.f, ballVel_.z);
         moveDir.Normalize();
-        float3 rollAxis(-moveDir.z, 0.f, moveDir.x);
-        rollAxis.Normalize();
+        // roll axis = moveDir * up
+        float3 rollAxis(moveDir.z, 0.f, -moveDir.x);
         const float angle = speed / ballRadius_;
-        rollMatrix_ = float4x4::CreateFromAxisAngle(rollAxis, angle) * rollMatrix_;
+        rollMatrix_ = rollMatrix_ * float4x4::CreateFromAxisAngle(rollAxis, angle);
     }
 }
 
