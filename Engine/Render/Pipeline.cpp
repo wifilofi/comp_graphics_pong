@@ -1,11 +1,24 @@
 #include "Pipeline.h"
 #include "Camera.h"
 #include <d3d11_1.h>
+#include <d3dcompiler.h>
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 
 #pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+
+static const char kFullscreenVS[] = R"hlsl(
+struct VS_OUT { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; };
+VS_OUT VSMain(uint id : SV_VertexID) {
+    VS_OUT o;
+    float2 uv = float2((id & 1) << 1, id & 2);
+    o.uv  = float2(uv.x, uv.y) * 0.5;
+    o.pos = float4(uv.x * 2 - 1, 1 - uv.y * 2, 0, 1);
+    return o;
+}
+)hlsl";
 
 using namespace Engine::Render;
 
@@ -39,6 +52,24 @@ void Pipeline::Construct(PHandlerWindow pHandlerWindow, const Point& size)
     pDevice_->CreateBuffer(&camDesc, nullptr, &pCameraBuffer_);
 
     ConstructDepthBuffer(size_.x, size_.y);
+    CreatePostRTs(size_.x, size_.y);
+
+    // compile the shared fullscreen vertex shader used by all post-process passes
+    ID3DBlob* pVSBlob = nullptr;
+    D3DCompile(kFullscreenVS, sizeof(kFullscreenVS) - 1, nullptr, nullptr, nullptr,
+               "VSMain", "vs_5_0", 0, 0, &pVSBlob, nullptr);
+    if (pVSBlob)
+    {
+        pDevice_->CreateVertexShader(pVSBlob->GetBufferPointer(),
+                                     pVSBlob->GetBufferSize(), nullptr, &pFullscreenVS_);
+        pVSBlob->Release();
+    }
+
+    D3D11_SAMPLER_DESC sd = {};
+    sd.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sd.MaxLOD   = D3D11_FLOAT32_MAX;
+    pDevice_->CreateSamplerState(&sd, &pPostSampler_);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -54,7 +85,10 @@ void Pipeline::SetCamera(Camera* pCamera)
 void Pipeline::Render(float delta) const
 {
     pDeviceContext_->ClearState();
-    pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, pDepthStencilView_);
+
+    // scene renders to offscreen[0] when post-processing is active, else directly to backbuffer
+    ID3D11RenderTargetView* sceneRTV = postProcesses_.empty() ? pRenderTargetView_ : pOffRTV_[0];
+    pDeviceContext_->OMSetRenderTargets(1, &sceneRTV, pDepthStencilView_);
     pDeviceContext_->ClearDepthStencilView(pDepthStencilView_, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
     // pillarbox
@@ -114,8 +148,35 @@ void Pipeline::Render(float delta) const
     pDeviceContext_->RSSetViewports(1, &viewport_);
     for (auto* pRenderAble : renderAbles_)
     {
-        pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, pDepthStencilView_);
+        pDeviceContext_->OMSetRenderTargets(1, &sceneRTV, pDepthStencilView_);
         pRenderAble->Render(delta);
+    }
+
+    // post-process passes: ping-pong between offscreen[0/1], last pass → backbuffer
+    if (!postProcesses_.empty())
+    {
+        pDeviceContext_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        pDeviceContext_->IASetInputLayout(nullptr);
+        pDeviceContext_->VSSetShader(pFullscreenVS_, nullptr, 0);
+        pDeviceContext_->PSSetSamplers(0, 1, &pPostSampler_);
+        pDeviceContext_->VSSetConstantBuffers(1, 1, &pFrameDataBuffer_);
+        pDeviceContext_->PSSetConstantBuffers(1, 1, &pFrameDataBuffer_);
+
+        for (size_t i = 0; i < postProcesses_.size(); ++i)
+        {
+            const bool isLast = (i == postProcesses_.size() - 1);
+            ID3D11RenderTargetView*   dst = isLast ? pRenderTargetView_ : pOffRTV_[(i + 1) % 2];
+            ID3D11ShaderResourceView* src = pOffSRV_[i % 2];
+
+            pDeviceContext_->OMSetRenderTargets(1, &dst, nullptr);
+            pDeviceContext_->PSSetShader(postProcesses_[i].ps, nullptr, 0);
+            pDeviceContext_->PSSetShaderResources(0, 1, &src);
+            pDeviceContext_->Draw(3, 0);
+
+            // unbind SRV so it can be used as RTV next pass
+            ID3D11ShaderResourceView* nullSRV = nullptr;
+            pDeviceContext_->PSSetShaderResources(0, 1, &nullSRV);
+        }
     }
 
     pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, nullptr);
@@ -137,11 +198,13 @@ void Pipeline::Resize(int newWidth, int newHeight)
     pRenderTargetView_ = nullptr;
 
     if (pDepthStencilView_) { pDepthStencilView_->Release(); pDepthStencilView_ = nullptr; }
+    DestroyPostRTs();
 
     pSwapChain_->ResizeBuffers(0, newWidth, newHeight, DXGI_FORMAT_UNKNOWN, 0);
 
     ConstructRenderTargetView();
     ConstructDepthBuffer(newWidth, newHeight);
+    CreatePostRTs(newWidth, newHeight);
 
     const float gameAspect = static_cast<float>(gameSize_.x) / static_cast<float>(gameSize_.y);
     const float winAspect  = static_cast<float>(newWidth) / static_cast<float>(newHeight);
@@ -246,4 +309,49 @@ void Pipeline::ConstructRenderTargetView()
     pSwapChain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backgroundTexture));
     pDevice_->CreateRenderTargetView(backgroundTexture, nullptr, &pRenderTargetView_);
     backgroundTexture->Release();
+}
+
+void Pipeline::CreatePostRTs(int w, int h)
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        D3D11_TEXTURE2D_DESC td = {};
+        td.Width            = static_cast<UINT>(w);
+        td.Height           = static_cast<UINT>(h);
+        td.MipLevels        = 1;
+        td.ArraySize        = 1;
+        td.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
+        td.SampleDesc.Count = 1;
+        td.Usage            = D3D11_USAGE_DEFAULT;
+        td.BindFlags        = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+        pDevice_->CreateTexture2D(&td, nullptr, &pOffTex_[i]);
+        pDevice_->CreateRenderTargetView(pOffTex_[i], nullptr, &pOffRTV_[i]);
+        pDevice_->CreateShaderResourceView(pOffTex_[i], nullptr, &pOffSRV_[i]);
+    }
+}
+
+void Pipeline::DestroyPostRTs()
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        if (pOffSRV_[i]) { pOffSRV_[i]->Release(); pOffSRV_[i] = nullptr; }
+        if (pOffRTV_[i]) { pOffRTV_[i]->Release(); pOffRTV_[i] = nullptr; }
+        if (pOffTex_[i]) { pOffTex_[i]->Release(); pOffTex_[i] = nullptr; }
+    }
+}
+
+void Pipeline::AddPostProcess(const char* pixelShaderHlsl)
+{
+    ID3DBlob* pPSBlob = nullptr;
+    ID3DBlob* pError  = nullptr;
+    D3DCompile(pixelShaderHlsl, strlen(pixelShaderHlsl), nullptr, nullptr, nullptr,
+               "PSMain", "ps_5_0", 0, 0, &pPSBlob, &pError);
+    if (pError) { pError->Release(); }
+    if (!pPSBlob) return;
+
+    PostProcessPass pass;
+    pDevice_->CreatePixelShader(pPSBlob->GetBufferPointer(),
+                                 pPSBlob->GetBufferSize(), nullptr, &pass.ps);
+    pPSBlob->Release();
+    postProcesses_.push_back(pass);
 }

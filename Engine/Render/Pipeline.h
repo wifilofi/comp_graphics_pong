@@ -23,6 +23,8 @@ namespace Engine
             void SetCamera(Camera* pCamera);
             void SetBackgroundColor(const float4& color) { bgColor_ = color; }
 
+            void AddPostProcess(const char* pixelShaderHlsl);
+
             DXDevice* GetDevice() const { return pDevice_.Get(); }
             DXDeviceContext* GetDeviceContext() const { return pDeviceContext_; }
             PHandlerWindow GetWindow() const { return hwnd_; }
@@ -48,6 +50,16 @@ namespace Engine
             void ConstructRenderTargetView();
             void ConstructBlendState();
             void ConstructDepthBuffer(int width, int height);
+            void CreatePostRTs(int w, int h);
+            void DestroyPostRTs();
+
+            struct PostProcessPass { DXPixelShader* ps = nullptr; };
+            std::vector<PostProcessPass>   postProcesses_;
+            DXVertexShader*                pFullscreenVS_   = nullptr;
+            ID3D11SamplerState*            pPostSampler_    = nullptr;
+            ID3D11Texture2D*               pOffTex_[2]      = {};
+            ID3D11RenderTargetView*        pOffRTV_[2]      = {};
+            ID3D11ShaderResourceView*      pOffSRV_[2]      = {};
 
             Point size_{};
             Point gameSize_{};
