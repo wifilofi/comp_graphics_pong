@@ -39,13 +39,6 @@ void ThirdPersonCamera::OnMouse(const Engine::Input::Mouse::Event& e)
     yaw_   -= static_cast<float>(e.Translation.x) * lookSpeed_;
     pitch_ += static_cast<float>(e.Translation.y) * lookSpeed_;
     pitch_  = std::clamp(pitch_, 0.1f, 1.4f);
-
-    if (e.WheelDelta != 0)
-    {
-        const float dir = e.WheelDelta > 0 ? -1.f : 1.f;
-        const float newDist = distance_ + dir * zoomSpeed_;
-        distance_ = newDist < 10.f ? 10.f : newDist;
-    }
 }
 
 float3 ThirdPersonCamera::GetForwardDir() const

@@ -358,7 +358,7 @@ void KatamariWorld::RenderUI()
     ImGui::Text("Ball radius: %.2f", ballRadius_);
     ImGui::Text("Absorbed: %d / %d", absorbedCount_,
                 static_cast<int>(pickups_.size() + fbxPickups_.size()));
-    ImGui::Text("WASD move  |  mouse look  |  scroll zoom");
+    ImGui::Text("WASD move  |  mouse look");
 
     ImGui::Separator();
 

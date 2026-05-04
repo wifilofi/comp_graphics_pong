@@ -31,7 +31,6 @@ namespace Engine::Render
         float    pitch_      = 0.4f;
         float    distance_   = 40.f;
         float    lookSpeed_  = 0.005f;
-        float    zoomSpeed_  = 3.f;
         float4x4 projection_{};
     };
 }
