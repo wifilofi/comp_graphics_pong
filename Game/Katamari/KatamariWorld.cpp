@@ -30,8 +30,9 @@ static constexpr float kAccel     = 0.015f;
 static constexpr float kFriction  = 0.92f;
 static constexpr float kMaxSpeed  = 0.35f;
 static constexpr float kPlaneHalf = 400.f;
-static constexpr float kJumpForce = 0.4f;
-static constexpr float kGravity   = 0.018f;
+static constexpr float kJumpForce    = 0.4f;
+static constexpr float kGravityRise  = 0.012f;
+static constexpr float kGravityFall  = 0.030f;
 
 
 void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
@@ -135,7 +136,7 @@ void KatamariWorld::UpdateBall()
     spaceWasDown_ = spaceDown;
 
     // gravity + vertical integration
-    ballVelY_ -= kGravity;
+    ballVelY_ -= (ballVelY_ > 0.f ? kGravityRise : kGravityFall);
     ballY_    += ballVelY_;
     if (ballY_ <= 0.f)
     {
