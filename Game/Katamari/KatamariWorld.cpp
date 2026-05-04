@@ -162,7 +162,9 @@ void KatamariWorld::CheckCollisions()
 void KatamariWorld::AbsorbPickup(Pickup& p)
 {
     const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
-    const float3 worldOffset = float3(p.pos.x, p.radius, p.pos.z) - ballCenter;
+    float3 dir = float3(p.pos.x, p.radius, p.pos.z) - ballCenter;
+    dir.Normalize();
+    const float3 worldOffset = dir * (ballRadius_ + p.radius);
     p.localOffset = float3::TransformNormal(worldOffset, rollMatrix_.Invert());
     p.absorbed    = true;
     ballRadius_  += p.radius * 0.04f;
@@ -172,7 +174,9 @@ void KatamariWorld::AbsorbPickup(Pickup& p)
 void KatamariWorld::AbsorbFbxPickup(FbxPickup& p)
 {
     const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
-    const float3 worldOffset = float3(p.pos.x, p.radius, p.pos.z) - ballCenter;
+    float3 dir = float3(p.pos.x, p.radius, p.pos.z) - ballCenter;
+    dir.Normalize();
+    const float3 worldOffset = dir * (ballRadius_ + p.radius);
     p.localOffset = float3::TransformNormal(worldOffset, rollMatrix_.Invert());
     p.absorbed    = true;
     ballRadius_  += p.radius * 0.04f;
