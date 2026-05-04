@@ -72,6 +72,8 @@ namespace Katamari
         std::vector<Pickup>    pickups_;
         std::vector<FbxPickup> fbxPickups_;
 
+        ID3D11ShaderResourceView*                        ballTexSRV_ = nullptr;
+
         char fbxPathBuf_[512] = {};
     };
 }

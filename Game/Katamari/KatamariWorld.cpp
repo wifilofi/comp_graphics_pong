@@ -48,7 +48,12 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
     auto boxV    = Basic::Shapes::Box::Vertices();
     auto boxI    = Basic::Shapes::Box::Indices();
 
-    ballRenderer_        .Construct(pPipeline_, sphereV, sphereI, ST::SolidColor);
+    {
+        namespace fs = std::filesystem;
+        const std::wstring texPath = (fs::path(__FILE__).parent_path() / "Textures" / "T_player_eshka.png").wstring();
+        DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, texPath.c_str(), nullptr, &ballTexSRV_);
+    }
+    ballRenderer_        .Construct(pPipeline_, sphereV, sphereI, ST::ShaderTex, ballTexSRV_);
     spherePickupRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::PerlinNoise);
     planeRenderer_       .Construct(pPipeline_, boxV,    boxI,    ST::SolidColor);
     boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::PerlinNoise);

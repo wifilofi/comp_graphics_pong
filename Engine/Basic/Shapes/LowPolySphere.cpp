@@ -10,7 +10,7 @@ std::vector<Vertex3D> LowPolySphere::Vertices(int slices, int stacks)
 {
     std::vector<Vertex3D> verts;
 
-    verts.push_back({{0, 1, 0}, {0, 1, 0}});
+    verts.push_back({{0, 1, 0}, {0, 1, 0}, {0.5f, 0.f}});
 
     for (int i = 1; i < stacks; ++i)
     {
@@ -21,11 +21,13 @@ std::vector<Vertex3D> LowPolySphere::Vertices(int slices, int stacks)
             const float x = sinf(phi) * cosf(theta);
             const float y = cosf(phi);
             const float z = sinf(phi) * sinf(theta);
-            verts.push_back({{x, y, z}, {x, y, z}});
+            const float u = static_cast<float>(j) / slices;
+            const float v = static_cast<float>(i) / stacks;
+            verts.push_back({{x, y, z}, {x, y, z}, {u, v}});
         }
     }
 
-    verts.push_back({{0, -1, 0}, {0, -1, 0}});
+    verts.push_back({{0, -1, 0}, {0, -1, 0}, {0.5f, 1.f}});
 
     return verts;
 }
