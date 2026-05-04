@@ -136,6 +136,58 @@ void KatamariWorld::UpdateBall()
     }
 }
 
+static float3 ClosestPointOnTriangle(float3 p, float3 a, float3 b, float3 c)
+{
+    const float3 ab = b - a, ac = c - a, ap = p - a;
+    const float d1 = ab.Dot(ap), d2 = ac.Dot(ap);
+    if (d1 <= 0.f && d2 <= 0.f) return a;
+
+    const float3 bp = p - b;
+    const float d3 = ab.Dot(bp), d4 = ac.Dot(bp);
+    if (d3 >= 0.f && d4 <= d3) return b;
+
+    const float3 cp = p - c;
+    const float d5 = ab.Dot(cp), d6 = ac.Dot(cp);
+    if (d6 >= 0.f && d5 <= d6) return c;
+
+    const float vc = d1 * d4 - d3 * d2;
+    if (vc <= 0.f && d1 >= 0.f && d3 <= 0.f)
+        return a + ab * (d1 / (d1 - d3));
+
+    const float vb = d5 * d2 - d1 * d6;
+    if (vb <= 0.f && d2 >= 0.f && d6 <= 0.f)
+        return a + ac * (d2 / (d2 - d6));
+
+    const float va = d3 * d6 - d5 * d4;
+    if (va <= 0.f && (d4 - d3) >= 0.f && (d5 - d6) >= 0.f)
+        return b + (c - b) * ((d4 - d3) / ((d4 - d3) + (d5 - d6)));
+
+    const float denom = 1.f / (va + vb + vc);
+    return a + ab * (vb * denom) + ac * (vc * denom);
+}
+
+static bool SphereIntersectsMesh(float3 ballCenter, float ballRadius,
+                                  const std::vector<float3>& meshVerts,
+                                  const std::vector<int32>& meshIndices,
+                                  float3 pickupPos, float pickupScale)
+{
+    // transform ball center into pickup local space (translate + uniform scale, no rotation)
+    const float3 localCenter = (ballCenter - pickupPos) / pickupScale;
+    const float  localRadius = ballRadius / pickupScale;
+    const float  r2          = localRadius * localRadius;
+
+    for (size_t i = 0; i + 2 < meshIndices.size(); i += 3)
+    {
+        const float3& a = meshVerts[meshIndices[i]];
+        const float3& b = meshVerts[meshIndices[i + 1]];
+        const float3& c = meshVerts[meshIndices[i + 2]];
+        const float3  closest = ClosestPointOnTriangle(localCenter, a, b, c);
+        if ((closest - localCenter).LengthSquared() <= r2)
+            return true;
+    }
+    return false;
+}
+
 void KatamariWorld::CheckCollisions()
 {
     const float3 ballCenter(ballPos_.x, ballRadius_, ballPos_.z);
@@ -153,8 +205,12 @@ void KatamariWorld::CheckCollisions()
     {
         if (p.absorbed) continue;
         const float3 pickupCenter(p.pos.x, p.radius, p.pos.z);
-        const float  dist = (ballCenter - pickupCenter).Length();
-        if (dist < (ballRadius_ + p.radius) * 2.f && ballRadius_ >= p.radius)
+        // broad phase
+        const float dist = (ballCenter - pickupCenter).Length();
+        if (dist > ballRadius_ + p.radius * 2.f) continue;
+        // narrow phase: actual mesh triangles
+        if (SphereIntersectsMesh(ballCenter, ballRadius_, p.meshVerts, p.meshIndices, pickupCenter, p.radius)
+            && ballRadius_ >= p.radius)
             AbsorbFbxPickup(p);
     }
 }
@@ -412,14 +468,21 @@ void KatamariWorld::LoadMesh(const std::string& path)
         Basic::Components::Rendering3D::ShaderType::ShaderTex, fbxTexSRV_);
 
 
+    // extract positions only for collision
+    std::vector<float3> colVerts;
+    colVerts.reserve(verts.size());
+    for (const auto& v : verts) colVerts.push_back(v.position);
+
     const unsigned seed = static_cast<unsigned>(reinterpret_cast<uintptr_t>(fbxTexSRV_) & 0xFFFF);
     srand(seed ? seed : 1u);
     for (int i = 0; i < 5; ++i)
     {
         FbxPickup p;
-        p.pos.x  = (rand() % 6000 - 3000) / 100.f;
-        p.pos.z  = (rand() % 6000 - 3000) / 100.f;
-        p.radius = (0.7f + (rand() % 120) / 100.f) * 2.f;
+        p.pos.x      = (rand() % 6000 - 3000) / 100.f;
+        p.pos.z      = (rand() % 6000 - 3000) / 100.f;
+        p.radius     = (0.7f + (rand() % 120) / 100.f) * 2.f;
+        p.meshVerts   = colVerts;
+        p.meshIndices = indices;
         fbxPickups_.push_back(p);
     }
 }

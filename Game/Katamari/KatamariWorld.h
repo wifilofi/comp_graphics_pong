@@ -41,6 +41,8 @@ namespace Katamari
             float  radius = 1.2f;
             bool   absorbed = false;
             float3 localOffset;
+            std::vector<float3>  meshVerts;
+            std::vector<int32>   meshIndices;
         };
 
         void SpawnPickups();
