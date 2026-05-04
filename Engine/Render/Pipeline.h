@@ -39,6 +39,8 @@ namespace Engine
             {
                 float4x4 view;
                 float4x4 projection;
+                float3   cameraPos;
+                float    _pad;
             };
 
         private:

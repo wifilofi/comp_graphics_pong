@@ -14,6 +14,7 @@ namespace Engine::Render
 
         float4x4 GetView()       const override;
         float4x4 GetProjection() const override;
+        float3   GetEyePos()     const override;
 
         void SetTarget(float3 target) { target_ = target; }
 

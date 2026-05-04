@@ -97,6 +97,7 @@ void Pipeline::Render(float delta) const
         auto* pCam = static_cast<CameraData*>(camSub.pData);
         pCam->view       = pCamera_->GetView().Transpose();
         pCam->projection = pCamera_->GetProjection().Transpose();
+        pCam->cameraPos  = pCamera_->GetEyePos();
         pDeviceContext_->Unmap(pCameraBuffer_, 0);
         pDeviceContext_->VSSetConstantBuffers(2, 1, &pCameraBuffer_);
     }

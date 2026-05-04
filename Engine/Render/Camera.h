@@ -9,10 +9,10 @@ namespace Engine::Render
     public:
         virtual ~Camera() = default;
 
-        virtual float4x4 GetView() const = 0;
+        virtual float4x4 GetView()       const = 0;
         virtual float4x4 GetProjection() const = 0;
+        virtual float3   GetEyePos()     const { return float3(0, 0, 0); }
 
-        // Called each fixed update tick
         virtual void FixedUpdate() {}
     };
 }

@@ -12,14 +12,29 @@ struct ObjectData { float4x4 model; float4 color; float4 color2; };
 StructuredBuffer<ObjectData> instances : register(t0);
 Texture2D    mainTex  : register(t1);
 SamplerState sampler0 : register(s0);
-cbuffer CameraBuffer : register(b2) { float4x4 view; float4x4 projection; };
-struct VS_IN  { float3 pos:POSITION0; float3 normal:NORMAL0; float2 uv:TEXCOORD0; };
-struct PS_IN  { float4 pos:SV_POSITION; float2 uv:TEXCOORD0; float4 color:COLOR0; };
+cbuffer CameraBuffer : register(b2) { float4x4 view; float4x4 projection; float3 cameraPos; float _pad; };
+cbuffer LightBuffer  : register(b3) { float3 lightDir; float _p0; float3 lightColor; float _p1; float3 ambientColor; float _p2; };
+struct VS_IN { float3 pos:POSITION0; float3 normal:NORMAL0; float2 uv:TEXCOORD0; };
+struct PS_IN { float4 pos:SV_POSITION; float2 uv:TEXCOORD0; float4 color:COLOR0; float3 worldPos:TEXCOORD1; float3 worldNormal:TEXCOORD2; };
 PS_IN VSMain(VS_IN i, uint id:SV_InstanceID) {
     ObjectData o = instances[id]; PS_IN r;
-    r.pos   = mul(mul(float4(i.pos,1), o.model), mul(view, projection));
+    float4 wp   = mul(float4(i.pos,1), o.model);
+    r.worldPos    = wp.xyz;
+    r.worldNormal = normalize(mul(i.normal, (float3x3)o.model));
+    r.pos   = mul(wp, mul(view, projection));
     r.uv    = i.uv; r.color = o.color; return r; }
-float4 PSMain(PS_IN i):SV_Target { return mainTex.Sample(sampler0,i.uv)*i.color; }
+float4 PSMain(PS_IN i):SV_Target {
+    float4 tex = mainTex.Sample(sampler0, i.uv) * i.color;
+    float3 N = normalize(i.worldNormal);
+    float3 L = normalize(-lightDir);
+    float3 V = normalize(cameraPos - i.worldPos);
+    float3 R = reflect(-L, N);
+    float  diff = max(dot(N, L), 0.0);
+    float  spec = pow(max(dot(V, R), 0.0), 32.0);
+    float3 col  = ambientColor * tex.rgb
+                + lightColor   * diff * tex.rgb
+                + lightColor   * spec * 0.3;
+    return float4(col, tex.a); }
 )hlsl";
 
 void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
@@ -159,6 +174,13 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
             device->CreateSamplerState(&sd, &s_pSampler);
         }
         pSamplerState_ = s_pSampler;
+
+        D3D11_BUFFER_DESC lb = {};
+        lb.Usage          = D3D11_USAGE_DYNAMIC;
+        lb.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+        lb.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        lb.ByteWidth      = sizeof(LightData);
+        device->CreateBuffer(&lb, nullptr, &pLightBuffer_);
     }
 }
 
@@ -209,6 +231,12 @@ void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
     {
         ctx->PSSetShaderResources(1, 1, &pTextureSRV_);
         ctx->PSSetSamplers(0, 1, &pSamplerState_);
+
+        D3D11_MAPPED_SUBRESOURCE lsub = {};
+        ctx->Map(pLightBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &lsub);
+        memcpy(lsub.pData, &light_, sizeof(LightData));
+        ctx->Unmap(pLightBuffer_, 0);
+        ctx->PSSetConstantBuffers(3, 1, &pLightBuffer_);
     }
 
     constexpr UINT stride = sizeof(Vertex3D);

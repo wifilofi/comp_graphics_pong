@@ -55,7 +55,8 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
         const std::wstring texPath = (fs::path(__FILE__).parent_path() / "Textures" / "T_player_eshka.png").wstring();
         DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, texPath.c_str(), nullptr, &ballTexSRV_);
     }
-    ballRenderer_        .Construct(pPipeline_, sphereV, sphereI, ST::ShaderTex, ballTexSRV_);
+    ballRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::ShaderTex, ballTexSRV_);
+    ballRenderer_.SetLight({ {0.4f,-1.f,0.6f}, 0.f, {1.f,0.95f,0.85f}, 0.f, {0.15f,0.15f,0.2f}, 0.f });
     spherePickupRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::PerlinNoise);
     planeRenderer_       .Construct(pPipeline_, boxV,    boxI,    ST::SolidColor);
     boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::PerlinNoise);

@@ -16,12 +16,17 @@ void ThirdPersonCamera::Construct(Engine::Input::Device* pDevice, float fovDegre
     pDevice_->MouseEvent.AddRaw(this, &ThirdPersonCamera::OnMouse);
 }
 
-float4x4 ThirdPersonCamera::GetView() const
+float3 ThirdPersonCamera::GetEyePos() const
 {
     const float x = distance_ * cosf(pitch_) * sinf(yaw_);
     const float y = distance_ * sinf(pitch_);
     const float z = distance_ * cosf(pitch_) * cosf(yaw_);
-    return float4x4::CreateLookAt(target_ + float3(x, y, z), target_, float3(0, 1, 0));
+    return target_ + float3(x, y, z);
+}
+
+float4x4 ThirdPersonCamera::GetView() const
+{
+    return float4x4::CreateLookAt(GetEyePos(), target_, float3(0, 1, 0));
 }
 
 float4x4 ThirdPersonCamera::GetProjection() const
