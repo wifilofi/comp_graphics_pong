@@ -30,7 +30,7 @@ static constexpr float kAccel     = 0.015f;
 static constexpr float kFriction  = 0.92f;
 static constexpr float kMaxSpeed  = 0.35f;
 static constexpr float kPlaneHalf = 400.f;
-static constexpr float kJumpForce    = 0.4f;
+static constexpr float kJumpForce    = 0.5f;
 static constexpr float kGravityRise  = 0.012f;
 static constexpr float kGravityFall  = 0.030f;
 
