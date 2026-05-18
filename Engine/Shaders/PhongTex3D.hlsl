@@ -54,7 +54,7 @@ PS_IN VSMain(VS_IN input, uint instanceID : SV_InstanceID)
     output.pos      = mul(viewPos, projection);
     output.worldPos = worldPos.xyz;
     output.normal   = normalize(mul(float4(input.normal, 0.0), obj.model).xyz);
-    output.uv       = input.uv;
+    output.uv       = input.uv * obj.color2.w;
     output.color    = obj.color;
     return output;
 }

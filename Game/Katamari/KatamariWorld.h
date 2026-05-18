@@ -80,6 +80,7 @@ namespace Katamari
 
         ID3D11ShaderResourceView*                        ballTexSRV_   = nullptr;
         ID3D11ShaderResourceView*                        cloudsTexSRV_ = nullptr;
+        ID3D11ShaderResourceView*                        grassTexSRV_  = nullptr;
 
         char fbxPathBuf_[512] = {};
     };

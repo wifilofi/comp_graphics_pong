@@ -54,12 +54,14 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
         namespace fs = std::filesystem;
         const std::wstring ballTex   = (fs::path(__FILE__).parent_path() / "Textures" / "T_player_eshka.png").wstring();
         const std::wstring cloudsTex = (fs::path(__FILE__).parent_path() / "Textures" / "T_clouds.png").wstring();
+        const std::wstring grassTex  = (fs::path(__FILE__).parent_path() / "Textures" / "T_grass.png").wstring();
         DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, ballTex.c_str(),   nullptr, &ballTexSRV_);
         DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, cloudsTex.c_str(), nullptr, &cloudsTexSRV_);
+        DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, grassTex.c_str(),  nullptr, &grassTexSRV_);
     }
     ballRenderer_        .Construct(pPipeline_, sphereV, sphereI, ST::PhongTex, ballTexSRV_);
     spherePickupRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::PhongTex, cloudsTexSRV_);
-    planeRenderer_       .Construct(pPipeline_, boxV,    boxI,    ST::Phong);
+    planeRenderer_       .Construct(pPipeline_, boxV,    boxI,    ST::PhongTex, grassTexSRV_);
     boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::Phong);
 
     SpawnPickups();
@@ -274,7 +276,7 @@ void KatamariWorld::Render(float /*delta*/)
         light.lightPos         = float3(80.f, 120.f, 60.f);
         light.lightColor       = float3(1.f, 0.98f, 0.92f);
         light.cameraPos        = camera_.GetEyePosition();
-        light.ambientStrength  = 0.15f;
+        light.ambientStrength  = 0.35f;
         light.specularStrength = 0.4f;
         light.shininess        = 48.f;
         Basic::Components::Rendering3D::SetLight(pPipeline_, light);
@@ -285,8 +287,8 @@ void KatamariWorld::Render(float /*delta*/)
         OD od;
         od.model  = (float4x4::CreateScale(kPlaneHalf, 0.2f, kPlaneHalf) *
                      float4x4::CreateTranslation(0.f, -0.1f, 0.f)).Transpose();
-        od.color  = float4(0.35f, 0.55f, 0.25f, 1);
-        od.color2 = float4(0.2f,  0.35f, 0.15f, 1);
+        od.color  = float4(1.f, 1.f, 1.f, 1);
+        od.color2 = float4(0.f,  0.f,  0.f,  80.f);
         planeRenderer_.DrawInstanced({od});
     }
 
