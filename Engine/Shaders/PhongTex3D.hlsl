@@ -9,6 +9,14 @@ StructuredBuffer<ObjectData> instances : register(t0);
 Texture2D    mainTex  : register(t1);
 SamplerState sampler0 : register(s0);
 
+Texture2D              shadowMap     : register(t2);
+SamplerComparisonState shadowSampler : register(s1);
+
+cbuffer ShadowBuffer : register(b4)
+{
+    float4x4 lightViewProj;
+};
+
 cbuffer CameraBuffer : register(b2)
 {
     float4x4 view;
@@ -66,6 +74,15 @@ float4 PSMain(PS_IN input) : SV_Target
     float3 norm    = normalize(input.normal);
     float3 viewDir = normalize(cameraPos - input.worldPos);
 
+    float shadow = 1.0;
+    {
+        float4 lsPos = mul(float4(input.worldPos, 1.0), lightViewProj);
+        float3 proj  = lsPos.xyz / lsPos.w;
+        float2 uv    = float2(proj.x * 0.5 + 0.5, proj.y * -0.5 + 0.5);
+        if (all(uv >= 0.0) && all(uv <= 1.0) && proj.z >= 0.0 && proj.z <= 1.0)
+            shadow = shadowMap.SampleCmpLevelZero(shadowSampler, uv, proj.z);
+    }
+
     float3 lighting = ambientStrength.xxx;
 
     for (int i = 0; i < numLights; ++i)
@@ -81,7 +98,9 @@ float4 PSMain(PS_IN input) : SV_Target
         float3 halfway = normalize(ldir + viewDir);
         float  spec    = pow(max(dot(norm, halfway), 0.0), shininess);
 
-        lighting += (diff + specularStrength * spec) * lightColor[i].xyz * atten;
+        float lit = diff + specularStrength * spec;
+        if (i == 0) lit *= shadow;
+        lighting += lit * lightColor[i].xyz * atten;
     }
 
     return float4(lighting * texColor.rgb, texColor.a);

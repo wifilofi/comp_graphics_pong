@@ -94,6 +94,11 @@ namespace Katamari
         ID3D11ShaderResourceView*                        cloudsTexSRV_ = nullptr;
         ID3D11ShaderResourceView*                        grassTexSRV_  = nullptr;
 
+        ID3D11Texture2D*          pShadowTex_     = nullptr;
+        ID3D11DepthStencilView*   pShadowDSV_     = nullptr;
+        ID3D11ShaderResourceView* pShadowSRV_     = nullptr;
+        ID3D11SamplerState*       pShadowSampler_ = nullptr;
+
         char fbxPathBuf_[512] = {};
     };
 }

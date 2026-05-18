@@ -47,8 +47,13 @@ namespace Basic::Components
                        ID3D11ShaderResourceView* pTextureSRV = nullptr);
 
         void DrawInstanced(const std::vector<ObjectData>& instances);
+        void DrawDepthOnly(const std::vector<ObjectData>& instances);
 
         static void SetLight(Engine::Render::Pipeline* pPipeline, const LightData& data);
+        static void SetShadowMatrix(Engine::Render::Pipeline* pPipeline, const float4x4& lightViewProj);
+        static void SetShadowMap(Engine::Render::Pipeline* pPipeline,
+                                 ID3D11ShaderResourceView* srv,
+                                 ID3D11SamplerState* sampler);
 
     private:
         void EnsureInstanceBuffer(int count);

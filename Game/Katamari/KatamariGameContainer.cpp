@@ -5,22 +5,22 @@
 
 using namespace Katamari;
 
-void KatamariGameContainer::Setup(Game* pGame)
+void KatamariGameContainer::Setup(Game *pGame)
 {
-    auto* pipeline = pGame->GetRenderPipeline();
+    auto *pipeline = pGame->GetRenderPipeline();
     pipeline->SetBackgroundColor({0.45f, 0.65f, 0.9f, 1.f});
 
-    auto* world = new KatamariWorld();
+    auto *world = new KatamariWorld();
     world->SetInputDevice(pGame->GetInputDevice());
     pipeline->Add(world);
     pGame->GetFixedUpdate()->Add(world);
 
-    auto* pp = new Engine::Render::PostProcess();
+    auto *pp = new Engine::Render::PostProcess();
     const auto sz = pipeline->GetSize();
     pp->Construct(pipeline, sz.x, sz.y);
 
-
-    pp->AddPass(L"././Shaders/GammaCorrection.hlsl");
     pp->AddPass(L"././Shaders/Posterize.hlsl");
+    pp->AddPass(L"././Shaders/GammaCorrection.hlsl");
+
     pipeline->SetPostProcess(pp);
 }

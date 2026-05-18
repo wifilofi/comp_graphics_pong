@@ -32,8 +32,9 @@ static constexpr float kMaxSpeed  = 0.35f;
 static constexpr float kPlaneHalf = 400.f;
 static constexpr float kJumpForce    = 0.5f;
 static constexpr float kRecoilForce  = 0.3f;
-static constexpr float kGravityRise  = 0.012f;
-static constexpr float kGravityFall  = 0.030f;
+static constexpr float kGravityRise   = 0.012f;
+static constexpr float kGravityFall   = 0.030f;
+static constexpr int   kShadowMapSize = 2048;
 
 
 void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
@@ -67,6 +68,41 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
     boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::Phong);
 
     SpawnPickups();
+
+    // Shadow map resources
+    {
+        auto* device = pPipeline_->GetDevice();
+
+        D3D11_TEXTURE2D_DESC texDesc = {};
+        texDesc.Width              = kShadowMapSize;
+        texDesc.Height             = kShadowMapSize;
+        texDesc.MipLevels          = 1;
+        texDesc.ArraySize          = 1;
+        texDesc.Format             = DXGI_FORMAT_R32_TYPELESS;
+        texDesc.SampleDesc.Count   = 1;
+        texDesc.Usage              = D3D11_USAGE_DEFAULT;
+        texDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+        device->CreateTexture2D(&texDesc, nullptr, &pShadowTex_);
+
+        D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+        dsvDesc.Format             = DXGI_FORMAT_D32_FLOAT;
+        dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2D;
+        device->CreateDepthStencilView(pShadowTex_, &dsvDesc, &pShadowDSV_);
+
+        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Format                    = DXGI_FORMAT_R32_FLOAT;
+        srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MipLevels       = 1;
+        device->CreateShaderResourceView(pShadowTex_, &srvDesc, &pShadowSRV_);
+
+        D3D11_SAMPLER_DESC sd = {};
+        sd.Filter         = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+        sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+        sd.BorderColor[0] = sd.BorderColor[1] = sd.BorderColor[2] = sd.BorderColor[3] = 1.f;
+        sd.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+        sd.MaxLOD         = D3D11_FLOAT32_MAX;
+        device->CreateSamplerState(&sd, &pShadowSampler_);
+    }
 }
 
 
@@ -104,7 +140,6 @@ void KatamariWorld::SpawnPickups()
     }
 }
 
-// ---- FixedUpdate -------------------------------------------------------------
 
 void KatamariWorld::FixedUpdate()
 {
@@ -304,82 +339,34 @@ void KatamariWorld::AbsorbFbxPickup(FbxPickup& p)
     ++absorbedCount_;
 }
 
-// ---- Render ------------------------------------------------------------------
 
 void KatamariWorld::Render(float /*delta*/)
 {
     using OD = Basic::Components::Rendering3D::ObjectData;
     using LD = Basic::Components::Rendering3D::LightData;
 
-    {
-        LD light;
-        light.cameraPos        = camera_.GetEyePosition();
-        light.ambientStrength  = 0.35f;
-        light.specularStrength = 0.4f;
-        light.shininess        = 48.f;
+    auto* ctx = pPipeline_->GetDeviceContext();
+    const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
 
-        light.lightPos[0]   = float4(80.f, 120.f, 60.f, 0.f);  // w=0: directional, no attenuation
-        light.lightColor[0] = float4(0.5f, 0.49f, 0.46f, 0.f);
-        light.numLights     = 1;
+    // Build all instance data (shared by shadow pass and main pass)
+    OD planeOD, ballOD;
 
-        for (const auto& sl : shotLights_)
-        {
-            const int i         = light.numLights++;
-            light.lightPos[i]   = float4(sl.pos.x, sl.pos.y, sl.pos.z, 1.f);  // w=1: point light
-            light.lightColor[i] = float4(sl.color.x * 3.f, sl.color.y * 3.f, sl.color.z * 3.f, 0.f);
-        }
+    planeOD.model  = (float4x4::CreateScale(kPlaneHalf, 0.2f, kPlaneHalf) *
+                      float4x4::CreateTranslation(0.f, -0.1f, 0.f)).Transpose();
+    planeOD.color  = float4(1.f, 1.f, 1.f, 1.f);
+    planeOD.color2 = float4(0.f, 0.f, 0.f, 80.f);
 
-        Basic::Components::Rendering3D::SetLight(pPipeline_, light);
-    }
-
-    // Shot light spheres
-    if (!shotLights_.empty())
-    {
-        std::vector<OD> lightODs;
-        lightODs.reserve(shotLights_.size());
-        for (const auto& sl : shotLights_)
-        {
-            OD od;
-            od.model  = (float4x4::CreateScale(1.8f) *
-                         float4x4::CreateTranslation(sl.pos)).Transpose();
-            od.color  = float4(sl.color.x, sl.color.y, sl.color.z, 0.9f);
-            od.color2 = float4(0.f, 0.f, 0.f, 1.f);
-            lightODs.push_back(od);
-        }
-        shotLightRenderer_.DrawInstanced(lightODs);
-    }
-
-    // Plane
-    {
-        OD od;
-        od.model  = (float4x4::CreateScale(kPlaneHalf, 0.2f, kPlaneHalf) *
-                     float4x4::CreateTranslation(0.f, -0.1f, 0.f)).Transpose();
-        od.color  = float4(1.f, 1.f, 1.f, 1);
-        od.color2 = float4(0.f,  0.f,  0.f,  80.f);
-        planeRenderer_.DrawInstanced({od});
-    }
-
-    // Ball
-    {
-        const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
-        OD od;
-        od.model  = (float4x4::CreateScale(ballRadius_) *
+    ballOD.model  = (float4x4::CreateScale(ballRadius_) *
                      rollMatrix_ *
                      float4x4::CreateTranslation(ballCenter)).Transpose();
-        od.color  = float4(0.92f, 0.87f, 0.82f, 1);
-        od.color2 = float4(0.45f, 0.32f, 0.20f, 1);
-        ballRenderer_.DrawInstanced({od});
-    }
+    ballOD.color  = float4(0.92f, 0.87f, 0.82f, 1.f);
+    ballOD.color2 = float4(0.45f, 0.32f, 0.20f, 1.f);
 
-    // Pickups (absorbed + free)
-    const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
     std::vector<OD> sphereODs, boxODs;
-
     for (const auto& p : pickups_)
     {
         float3   worldPos;
         float4x4 rot = float4x4::Identity;
-
         if (p.absorbed)
         {
             worldPos = ballCenter + float3::TransformNormal(p.localOffset, rollMatrix_);
@@ -389,24 +376,18 @@ void KatamariWorld::Render(float /*delta*/)
         {
             worldPos = float3(p.pos.x, p.radius, p.pos.z);
         }
-
         OD od;
         od.model  = (float4x4::CreateScale(p.radius) * rot *
                      float4x4::CreateTranslation(worldPos)).Transpose();
         od.color  = p.color;
         od.color2 = p.color2;
-
         if (p.isSphere) sphereODs.push_back(od);
         else            boxODs.push_back(od);
     }
 
-    if (!sphereODs.empty()) spherePickupRenderer_.DrawInstanced(sphereODs);
-    if (!boxODs.empty())    boxPickupRenderer_.DrawInstanced(boxODs);
-
-    // FBX pickups
+    std::vector<OD> fbxODs;
     if (fbxMeshRenderer_ && !fbxPickups_.empty())
     {
-        std::vector<OD> fbxODs;
         for (const auto& p : fbxPickups_)
         {
             float3   worldPos;
@@ -427,11 +408,100 @@ void KatamariWorld::Render(float /*delta*/)
             od.color2 = float4(0.f, 0.f, 0.f, 1.f);
             fbxODs.push_back(od);
         }
-        fbxMeshRenderer_->DrawInstanced(fbxODs);
     }
+
+    // shadow
+    {
+        const float3 kLightDir = float3(80.f, 120.f, 60.f);
+        const float3 lightEye  = kLightDir * (500.f / kLightDir.Length());
+        const float4x4 lightView     = float4x4::CreateLookAt(lightEye, float3::Zero, float3(0.f, 1.f, 0.f));
+        const float4x4 lightProj     = float4x4::CreateOrthographic(900.f, 900.f, 1.f, 1500.f);
+        const float4x4 lightViewProj = (lightView * lightProj).Transpose();
+
+        Basic::Components::Rendering3D::SetShadowMatrix(pPipeline_, lightViewProj);
+
+        // Unbind shadow SRV — can't be SRV and DSV at the same time
+        ID3D11ShaderResourceView* nullSRV = nullptr;
+        ctx->PSSetShaderResources(2, 1, &nullSRV);
+
+        ID3D11RenderTargetView* pOldRTV = nullptr;
+        ID3D11DepthStencilView* pOldDSV = nullptr;
+        ctx->OMGetRenderTargets(1, &pOldRTV, &pOldDSV);
+
+        D3D11_VIEWPORT shadowVP = {};
+        shadowVP.Width    = static_cast<float>(kShadowMapSize);
+        shadowVP.Height   = static_cast<float>(kShadowMapSize);
+        shadowVP.MaxDepth = 1.f;
+        ctx->RSSetViewports(1, &shadowVP);
+
+        ID3D11RenderTargetView* pNullRTV = nullptr;
+        ctx->OMSetRenderTargets(1, &pNullRTV, pShadowDSV_);
+        ctx->ClearDepthStencilView(pShadowDSV_, D3D11_CLEAR_DEPTH, 1.f, 0);
+
+        planeRenderer_.DrawDepthOnly({planeOD});
+        ballRenderer_.DrawDepthOnly({ballOD});
+        if (!sphereODs.empty()) spherePickupRenderer_.DrawDepthOnly(sphereODs);
+        if (!boxODs.empty())    boxPickupRenderer_.DrawDepthOnly(boxODs);
+        if (!fbxODs.empty())    fbxMeshRenderer_->DrawDepthOnly(fbxODs);
+
+        ctx->OMSetRenderTargets(1, &pOldRTV, pOldDSV);
+        if (pOldRTV) pOldRTV->Release();
+        if (pOldDSV) pOldDSV->Release();
+        const D3D11_VIEWPORT& vp = pPipeline_->GetViewport();
+        ctx->RSSetViewports(1, &vp);
+    }
+
+
+    ctx->PSSetShaderResources(2, 1, &pShadowSRV_);
+    ctx->PSSetSamplers(1, 1, &pShadowSampler_);
+
+    // lighting
+    {
+        LD light;
+        light.cameraPos        = camera_.GetEyePosition();
+        light.ambientStrength  = 0.35f;
+        light.specularStrength = 0.4f;
+        light.shininess        = 48.f;
+        light.lightPos[0]      = float4(80.f, 120.f, 60.f, 0.f);
+        light.lightColor[0]    = float4(0.5f, 0.49f, 0.46f, 0.f);
+        light.numLights        = 1;
+        for (const auto& sl : shotLights_)
+        {
+            const int i         = light.numLights++;
+            light.lightPos[i]   = float4(sl.pos.x, sl.pos.y, sl.pos.z, 1.f);
+            light.lightColor[i] = float4(sl.color.x * 3.f, sl.color.y * 3.f, sl.color.z * 3.f, 0.f);
+        }
+        Basic::Components::Rendering3D::SetLight(pPipeline_, light);
+    }
+
+    // main pass
+    if (!shotLights_.empty())
+    {
+        std::vector<OD> lightODs;
+        lightODs.reserve(shotLights_.size());
+        for (const auto& sl : shotLights_)
+        {
+            OD od;
+            od.model  = (float4x4::CreateScale(1.8f) *
+                         float4x4::CreateTranslation(sl.pos)).Transpose();
+            od.color  = float4(sl.color.x, sl.color.y, sl.color.z, 0.9f);
+            od.color2 = float4(0.f, 0.f, 0.f, 1.f);
+            lightODs.push_back(od);
+        }
+        shotLightRenderer_.DrawInstanced(lightODs);
+    }
+
+    planeRenderer_.DrawInstanced({planeOD});
+    ballRenderer_.DrawInstanced({ballOD});
+    if (!sphereODs.empty()) spherePickupRenderer_.DrawInstanced(sphereODs);
+    if (!boxODs.empty())    boxPickupRenderer_.DrawInstanced(boxODs);
+    if (fbxMeshRenderer_ && !fbxODs.empty()) fbxMeshRenderer_->DrawInstanced(fbxODs);
+
+    // Unbind shadow SRV to avoid resource hazard on next frame's shadow pass
+    ID3D11ShaderResourceView* nullSRV = nullptr;
+    ctx->PSSetShaderResources(2, 1, &nullSRV);
 }
 
-// ---- UI ----------------------------------------------------------------------
 
 void KatamariWorld::RenderUI()
 {

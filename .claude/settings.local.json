@@ -6,7 +6,10 @@
       "Bash(dir \"C:\\\\Users\\\\gfn\\\\Documents\\\\_codern\\\\pong\\\\Engine\" /s /b)",
       "Bash(grep -E \"^.*\\\\\\\\[^\\\\\\\\]*$\")",
       "Bash(powershell *)",
-      "PowerShell(Rename-Item *)"
+      "PowerShell(Rename-Item *)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Shadow\")",
+      "PowerShell(Copy-Item *)"
     ]
   }
 }

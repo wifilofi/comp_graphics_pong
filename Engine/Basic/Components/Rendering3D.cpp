@@ -270,6 +270,104 @@ void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
     }
 }
 
+void Rendering3D::DrawDepthOnly(const std::vector<ObjectData>& instances)
+{
+    if (instances.empty() || !pVertexBuffer_) return;
+
+    const int count = static_cast<int>(instances.size());
+    EnsureInstanceBuffer(count);
+
+    auto* device = pPipeline_->GetDevice();
+    auto* ctx    = pPipeline_->GetDeviceContext();
+
+    static DXVertexShader*  s_pShadowVS   = nullptr;
+    static DXInputLayout*   s_pShadowIL   = nullptr;
+    static DXRasterizerState* s_pShadowRS = nullptr;
+
+    if (!s_pShadowVS)
+    {
+        DXBlob* pBlob  = nullptr;
+        DXBlob* pError = nullptr;
+        D3DCompileFromFile(L"././Shaders/ShadowDepth.hlsl", nullptr, nullptr,
+                           "VSMain", "vs_5_0",
+                           D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+                           0, &pBlob, &pError);
+        if (pError) { pError->Release(); pError = nullptr; }
+        if (!pBlob) return;
+
+        device->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
+                                   nullptr, &s_pShadowVS);
+
+        const D3D11_INPUT_ELEMENT_DESC layout[] = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        };
+        device->CreateInputLayout(layout, 1, pBlob->GetBufferPointer(),
+                                  pBlob->GetBufferSize(), &s_pShadowIL);
+        pBlob->Release();
+    }
+    if (!s_pShadowRS)
+    {
+        CD3D11_RASTERIZER_DESC desc(D3D11_DEFAULT);
+        desc.CullMode             = D3D11_CULL_BACK;
+        desc.DepthBias            = 2000;
+        desc.SlopeScaledDepthBias = 2.f;
+        device->CreateRasterizerState(&desc, &s_pShadowRS);
+    }
+    if (!s_pShadowVS || !s_pShadowIL) return;
+
+    D3D11_MAPPED_SUBRESOURCE sub = {};
+    ctx->Map(pInstanceBuffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub);
+    memcpy(sub.pData, instances.data(), sizeof(ObjectData) * count);
+    ctx->Unmap(pInstanceBuffer_, 0);
+
+    ctx->VSSetShaderResources(0, 1, &pInstanceSRV_);
+    constexpr UINT stride = sizeof(Vertex3D);
+    constexpr UINT offset = 0;
+    ctx->RSSetState(s_pShadowRS);
+    ctx->IASetInputLayout(s_pShadowIL);
+    ctx->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    ctx->IASetVertexBuffers(0, 1, &pVertexBuffer_, &stride, &offset);
+    ctx->IASetIndexBuffer(pIndexBuffer_, DXGI_FORMAT_R32_UINT, 0);
+    ctx->VSSetShader(s_pShadowVS, nullptr, 0);
+    ctx->PSSetShader(nullptr, nullptr, 0);
+
+    ctx->DrawIndexedInstanced(static_cast<UINT>(indexCount_), static_cast<UINT>(count), 0, 0, 0);
+}
+
+void Rendering3D::SetShadowMatrix(Engine::Render::Pipeline* pPipeline, const float4x4& lightViewProj)
+{
+    auto* device = pPipeline->GetDevice();
+    auto* ctx    = pPipeline->GetDeviceContext();
+
+    static DXBuffer* s_pShadowCB = nullptr;
+    if (!s_pShadowCB)
+    {
+        D3D11_BUFFER_DESC desc = {};
+        desc.Usage          = D3D11_USAGE_DYNAMIC;
+        desc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        desc.ByteWidth      = sizeof(float4x4);
+        device->CreateBuffer(&desc, nullptr, &s_pShadowCB);
+    }
+
+    D3D11_MAPPED_SUBRESOURCE sub = {};
+    ctx->Map(s_pShadowCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub);
+    memcpy(sub.pData, &lightViewProj, sizeof(float4x4));
+    ctx->Unmap(s_pShadowCB, 0);
+
+    ctx->VSSetConstantBuffers(4, 1, &s_pShadowCB);
+    ctx->PSSetConstantBuffers(4, 1, &s_pShadowCB);
+}
+
+void Rendering3D::SetShadowMap(Engine::Render::Pipeline* pPipeline,
+                               ID3D11ShaderResourceView* srv,
+                               ID3D11SamplerState* sampler)
+{
+    auto* ctx = pPipeline->GetDeviceContext();
+    ctx->PSSetShaderResources(2, 1, &srv);
+    ctx->PSSetSamplers(1, 1, &sampler);
+}
+
 void Rendering3D::SetLight(Engine::Render::Pipeline* pPipeline, const LightData& data)
 {
     auto* device = pPipeline->GetDevice();
