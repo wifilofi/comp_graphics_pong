@@ -12,18 +12,18 @@ namespace Basic::Components
     public:
         enum class ShaderType { SolidColor, PerlinNoise, ShaderTex, Phong, PhongTex };
 
+        static constexpr int kMaxLights = 16;
+
         struct LightData
         {
-            float3 lightPos;
-            float  _pad0       = 0.f;
-            float3 lightColor  = { 1.f, 1.f, 1.f };
-            float  _pad1       = 0.f;
             float3 cameraPos;
-            float  _pad2       = 0.f;
-            float  ambientStrength  = 0.1f;
+            int    numLights        = 1;
+            float  ambientStrength  = 0.15f;
             float  specularStrength = 0.5f;
             float  shininess        = 32.f;
-            float  _pad3       = 0.f;
+            float  _pad             = 0.f;
+            float4 lightPos[kMaxLights]   = {};   // xyz = world pos, w = unused
+            float4 lightColor[kMaxLights] = {};   // xyz = color,     w = unused
         };
 
         struct Vertex3D

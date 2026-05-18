@@ -15,18 +15,18 @@ cbuffer CameraBuffer : register(b2)
     float4x4 projection;
 };
 
+static const int kMaxLights = 16;
+
 cbuffer LightBuffer : register(b3)
 {
-    float3 lightPos;
-    float  _pad0;
-    float3 lightColor;
-    float  _pad1;
     float3 cameraPos;
-    float  _pad2;
+    int    numLights;
     float  ambientStrength;
     float  specularStrength;
     float  shininess;
-    float  _pad3;
+    float  _pad0;
+    float4 lightPos[kMaxLights];
+    float4 lightColor[kMaxLights];
 };
 
 struct VS_IN
@@ -63,19 +63,26 @@ float4 PSMain(PS_IN input) : SV_Target
 {
     float4 texColor = mainTex.Sample(sampler0, input.uv) * input.color;
 
-    float3 norm     = normalize(input.normal);
-    float3 lightDir = normalize(lightPos - input.worldPos);
-    float3 viewDir  = normalize(cameraPos - input.worldPos);
+    float3 norm    = normalize(input.normal);
+    float3 viewDir = normalize(cameraPos - input.worldPos);
 
-    float3 ambient  = ambientStrength * lightColor;
+    float3 lighting = ambientStrength.xxx;
 
-    float  diff     = max(dot(norm, lightDir), 0.0);
-    float3 diffuse  = diff * lightColor;
+    for (int i = 0; i < numLights; ++i)
+    {
+        float3 ldir  = lightPos[i].xyz - input.worldPos;
+        float  dist  = length(ldir);
+        ldir        /= dist;
+        float  atten = lightPos[i].w > 0.5
+                     ? 1.0 / (1.0 + 0.09 * dist + 0.032 * dist * dist)
+                     : 1.0;
 
-    float3 halfway  = normalize(lightDir + viewDir);
-    float  spec     = pow(max(dot(norm, halfway), 0.0), shininess);
-    float3 specular = specularStrength * spec * lightColor;
+        float  diff    = max(dot(norm, ldir), 0.0);
+        float3 halfway = normalize(ldir + viewDir);
+        float  spec    = pow(max(dot(norm, halfway), 0.0), shininess);
 
-    float3 result   = (ambient + diffuse + specular) * texColor.rgb;
-    return float4(result, texColor.a);
+        lighting += (diff + specularStrength * spec) * lightColor[i].xyz * atten;
+    }
+
+    return float4(lighting * texColor.rgb, texColor.a);
 }

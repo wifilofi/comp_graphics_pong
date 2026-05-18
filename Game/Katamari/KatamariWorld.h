@@ -45,6 +45,14 @@ namespace Katamari
             std::vector<int32>   meshIndices;
         };
 
+        struct ShotLight
+        {
+            float3 pos;
+            float3 vel;
+            float3 color;
+            float  life = 8.f;  // seconds at 60fps ticks
+        };
+
         void SpawnPickups();
         void UpdateBall();
         void CheckCollisions();
@@ -64,6 +72,9 @@ namespace Katamari
         float    ballY_      = 0.f;  // height above ground (0 = on ground)
         int      jumpsLeft_  = 2;
         bool     spaceWasDown_ = false;
+        bool     lmbWasDown_   = false;
+
+        std::vector<ShotLight> shotLights_;
         float4x4 rollMatrix_;
         int      absorbedCount_ = 0;
 

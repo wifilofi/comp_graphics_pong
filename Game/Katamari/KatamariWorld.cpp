@@ -109,6 +109,41 @@ void KatamariWorld::FixedUpdate()
     UpdateBall();
     CheckCollisions();
     camera_.SetTarget(float3(ballPos_.x, ballRadius_ + ballY_, ballPos_.z));
+
+    // shoot light on LMB press
+    const bool lmbDown = pDevice_->IsKeyDown(Keys::MouseLeftButton);
+    if (lmbDown && !lmbWasDown_)
+    {
+        static const float3 kLightColors[] = {
+            {1.f, 0.4f, 0.1f}, {0.2f, 0.6f, 1.f}, {0.4f, 1.f, 0.3f},
+            {1.f, 0.2f, 0.8f}, {1.f, 0.9f, 0.2f}, {0.2f, 1.f, 0.9f},
+        };
+        static int colorIdx = 0;
+
+        const float3 ballCenter(ballPos_.x, ballRadius_ + ballY_, ballPos_.z);
+        const float3 fwd = camera_.GetForwardDir();
+
+        ShotLight sl;
+        sl.pos   = ballCenter + float3(0.f, ballRadius_, 0.f);
+        sl.vel   = fwd * 3.f + float3(0.f, 0.5f, 0.f);
+        sl.color = kLightColors[colorIdx++ % 6];
+        sl.life  = 300.f;
+
+        if (static_cast<int>(shotLights_.size()) < Basic::Components::Rendering3D::kMaxLights - 1)
+            shotLights_.push_back(sl);
+    }
+    lmbWasDown_ = lmbDown;
+
+    // move and age shot lights
+    for (auto& sl : shotLights_)
+    {
+        sl.pos  += sl.vel;
+        sl.life -= 1.f;
+    }
+    shotLights_.erase(
+        std::remove_if(shotLights_.begin(), shotLights_.end(),
+                       [](const ShotLight& s){ return s.life <= 0.f; }),
+        shotLights_.end());
 }
 
 void KatamariWorld::UpdateBall()
@@ -273,12 +308,22 @@ void KatamariWorld::Render(float /*delta*/)
 
     {
         LD light;
-        light.lightPos         = float3(80.f, 120.f, 60.f);
-        light.lightColor       = float3(1.f, 0.98f, 0.92f);
         light.cameraPos        = camera_.GetEyePosition();
         light.ambientStrength  = 0.35f;
         light.specularStrength = 0.4f;
         light.shininess        = 48.f;
+
+        light.lightPos[0]   = float4(80.f, 120.f, 60.f, 0.f);  // w=0: directional, no attenuation
+        light.lightColor[0] = float4(0.5f, 0.49f, 0.46f, 0.f);
+        light.numLights     = 1;
+
+        for (const auto& sl : shotLights_)
+        {
+            const int i         = light.numLights++;
+            light.lightPos[i]   = float4(sl.pos.x, sl.pos.y, sl.pos.z, 1.f);  // w=1: point light
+            light.lightColor[i] = float4(sl.color.x, sl.color.y, sl.color.z, 0.f);
+        }
+
         Basic::Components::Rendering3D::SetLight(pPipeline_, light);
     }
 
