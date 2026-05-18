@@ -36,9 +36,9 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     indexCount_  = static_cast<int32>(indices.size());
     auto* device = pPipeline_->GetDevice();
 
-    static DXVertexShader* s_pVS[4]     = {};
-    static DXPixelShader*  s_pPS[4]     = {};
-    static DXInputLayout*  s_pLayout[4] = {};
+    static DXVertexShader* s_pVS[5]     = {};
+    static DXPixelShader*  s_pPS[5]     = {};
+    static DXInputLayout*  s_pLayout[5] = {};
 
     const int idx = static_cast<int>(shaderType);
 
@@ -65,6 +65,8 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
                 ? L"././Shaders/ShaderNoise3D.hlsl"
                 : (shaderType == ShaderType::Phong)
                 ? L"././Shaders/Phong3D.hlsl"
+                : (shaderType == ShaderType::PhongTex)
+                ? L"././Shaders/PhongTex3D.hlsl"
                 : L"././Shaders/Shader3D.hlsl";
 
             D3DCompileFromFile(file, nullptr, nullptr,
@@ -89,7 +91,7 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
             pPSBlob->Release();
         }
 
-        if (shaderType == ShaderType::ShaderTex)
+        if (shaderType == ShaderType::ShaderTex || shaderType == ShaderType::PhongTex)
         {
             const D3D11_INPUT_ELEMENT_DESC layout[] = {
                 { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -149,9 +151,10 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
         desc.CullMode = D3D11_CULL_NONE;
         device->CreateRasterizerState(&desc, &s_pRastNoCull);
     }
-    pRasterizerState_ = (shaderType == ShaderType::ShaderTex) ? s_pRastNoCull : s_pRastCull;
+    pRasterizerState_ = (shaderType == ShaderType::ShaderTex || shaderType == ShaderType::PhongTex)
+                      ? s_pRastNoCull : s_pRastCull;
 
-    if (shaderType == ShaderType::ShaderTex)
+    if (shaderType == ShaderType::ShaderTex || shaderType == ShaderType::PhongTex)
     {
         static ID3D11SamplerState* s_pSampler = nullptr;
         if (!s_pSampler)
@@ -209,7 +212,7 @@ void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
 
     ctx->VSSetShaderResources(0, 1, &pInstanceSRV_);
 
-    if (shaderType_ == ShaderType::ShaderTex)
+    if (shaderType_ == ShaderType::ShaderTex || shaderType_ == ShaderType::PhongTex)
     {
         ctx->PSSetShaderResources(1, 1, &pTextureSRV_);
         ctx->PSSetSamplers(0, 1, &pSamplerState_);
@@ -224,7 +227,7 @@ void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
     ctx->IASetIndexBuffer(pIndexBuffer_, DXGI_FORMAT_R32_UINT, 0);
     ctx->VSSetShader(pVertexShader_, nullptr, 0);
     ctx->PSSetShader(pPixelShader_, nullptr, 0);
-    if (shaderType_ == ShaderType::Phong && s_pLightBuffer)
+    if ((shaderType_ == ShaderType::Phong || shaderType_ == ShaderType::PhongTex) && s_pLightBuffer)
         ctx->PSSetConstantBuffers(3, 1, &s_pLightBuffer);
 
     ctx->DrawIndexedInstanced(static_cast<UINT>(indexCount_), static_cast<UINT>(count), 0, 0, 0);

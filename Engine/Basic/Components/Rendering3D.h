@@ -10,7 +10,7 @@ namespace Basic::Components
     class Rendering3D
     {
     public:
-        enum class ShaderType { SolidColor, PerlinNoise, ShaderTex, Phong };
+        enum class ShaderType { SolidColor, PerlinNoise, ShaderTex, Phong, PhongTex };
 
         struct LightData
         {

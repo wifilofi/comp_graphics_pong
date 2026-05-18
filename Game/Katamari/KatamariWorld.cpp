@@ -52,11 +52,13 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
 
     {
         namespace fs = std::filesystem;
-        const std::wstring texPath = (fs::path(__FILE__).parent_path() / "Textures" / "T_player_eshka.png").wstring();
-        DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, texPath.c_str(), nullptr, &ballTexSRV_);
+        const std::wstring ballTex   = (fs::path(__FILE__).parent_path() / "Textures" / "T_player_eshka.png").wstring();
+        const std::wstring cloudsTex = (fs::path(__FILE__).parent_path() / "Textures" / "T_clouds.png").wstring();
+        DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, ballTex.c_str(),   nullptr, &ballTexSRV_);
+        DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, cloudsTex.c_str(), nullptr, &cloudsTexSRV_);
     }
-    ballRenderer_        .Construct(pPipeline_, sphereV, sphereI, ST::ShaderTex, ballTexSRV_);
-    spherePickupRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::Phong);
+    ballRenderer_        .Construct(pPipeline_, sphereV, sphereI, ST::PhongTex, ballTexSRV_);
+    spherePickupRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::PhongTex, cloudsTexSRV_);
     planeRenderer_       .Construct(pPipeline_, boxV,    boxI,    ST::Phong);
     boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::Phong);
 
@@ -501,7 +503,7 @@ void KatamariWorld::LoadMesh(const std::string& path)
 
     fbxMeshRenderer_ = std::make_unique<Basic::Components::Rendering3D>();
     fbxMeshRenderer_->Construct(pPipeline_, verts, indices,
-        Basic::Components::Rendering3D::ShaderType::ShaderTex, fbxTexSRV_);
+        Basic::Components::Rendering3D::ShaderType::PhongTex, fbxTexSRV_);
 
 
     // extract positions only for collision
