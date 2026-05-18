@@ -1,5 +1,6 @@
 #include "Pipeline.h"
 #include "Camera.h"
+#include "PostProcess.h"
 #include <d3d11_1.h>
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
@@ -53,13 +54,17 @@ void Pipeline::SetCamera(Camera* pCamera)
 
 void Pipeline::Render(float delta) const
 {
-    pDeviceContext_->ClearState();
-    pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, pDepthStencilView_);
-    pDeviceContext_->ClearDepthStencilView(pDepthStencilView_, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    auto* sceneRTV = pPostProcess_ ? pPostProcess_->GetSceneRTV() : pRenderTargetView_;
+    auto* sceneDSV = pPostProcess_ ? pPostProcess_->GetSceneDSV() : pDepthStencilView_;
 
-    // pillarbox
+    pDeviceContext_->ClearState();
+    pDeviceContext_->OMSetRenderTargets(1, &sceneRTV, sceneDSV);
+    pDeviceContext_->ClearDepthStencilView(sceneDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
     constexpr float black[] = {0.0f, 0.0f, 0.0f, 1.0f};
     pDeviceContext_->ClearRenderTargetView(pRenderTargetView_, black);
+    if (pPostProcess_)
+        pDeviceContext_->ClearRenderTargetView(sceneRTV, black);
 
     // #2c4b76 for the game area only
     ID3D11DeviceContext1* pContext1 = nullptr;
@@ -113,9 +118,12 @@ void Pipeline::Render(float delta) const
     pDeviceContext_->RSSetViewports(1, &viewport_);
     for (auto* pRenderAble : renderAbles_)
     {
-        pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, pDepthStencilView_);
+        pDeviceContext_->OMSetRenderTargets(1, &sceneRTV, sceneDSV);
         pRenderAble->Render(delta);
     }
+
+    if (pPostProcess_)
+        pPostProcess_->Apply(pRenderTargetView_);
 
     pDeviceContext_->OMSetRenderTargets(1, &pRenderTargetView_, nullptr);
     ImGui::Render();

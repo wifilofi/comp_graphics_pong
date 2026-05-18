@@ -11,6 +11,7 @@ namespace Engine
     {
         class Renderer;
         class Camera;
+        class PostProcess;
 
         class Pipeline final
         {
@@ -22,6 +23,8 @@ namespace Engine
             void Add(Renderer* pRenderAble);
             void SetCamera(Camera* pCamera);
             void SetBackgroundColor(const float4& color) { bgColor_ = color; }
+            void SetPostProcess(PostProcess* p)          { pPostProcess_ = p; }
+            Point GetSize() const                        { return size_; }
 
             DXDevice* GetDevice() const { return pDevice_.Get(); }
             DXDeviceContext* GetDeviceContext() const { return pDeviceContext_; }
@@ -61,8 +64,9 @@ namespace Engine
             mutable float time_ = 0.f;
             float4 bgColor_ = {0x2c / 255.0f, 0x4b / 255.0f, 0x76 / 255.0f, 1.0f};
             std::vector<Renderer*> renderAbles_{};
-            PHandlerWindow hwnd_ = nullptr;
-            Camera* pCamera_ = nullptr;
+            PHandlerWindow hwnd_         = nullptr;
+            Camera*        pCamera_      = nullptr;
+            PostProcess*   pPostProcess_ = nullptr;
         };
     }
 }

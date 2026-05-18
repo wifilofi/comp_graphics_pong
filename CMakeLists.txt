@@ -48,6 +48,8 @@ add_executable(${PROJECT_NAME} WIN32
         Engine/Render/Renderer.h
         Engine/Render/Pipeline.cpp
         Engine/Render/Pipeline.h
+        Engine/Render/PostProcess.cpp
+        Engine/Render/PostProcess.h
         Engine/Render/Window.cpp
         Engine/Render/Window.h
         Engine/Update/Fixed.cpp
