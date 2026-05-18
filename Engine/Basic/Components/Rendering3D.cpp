@@ -7,6 +7,8 @@
 
 using namespace Basic::Components;
 
+static DXBuffer* s_pLightBuffer = nullptr;
+
 static const char kShaderTex3D[] = R"hlsl(
 struct ObjectData { float4x4 model; float4 color; float4 color2; };
 StructuredBuffer<ObjectData> instances : register(t0);
@@ -34,9 +36,9 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     indexCount_  = static_cast<int32>(indices.size());
     auto* device = pPipeline_->GetDevice();
 
-    static DXVertexShader* s_pVS[3]     = {};
-    static DXPixelShader*  s_pPS[3]     = {};
-    static DXInputLayout*  s_pLayout[3] = {};
+    static DXVertexShader* s_pVS[4]     = {};
+    static DXPixelShader*  s_pPS[4]     = {};
+    static DXInputLayout*  s_pLayout[4] = {};
 
     const int idx = static_cast<int>(shaderType);
 
@@ -61,6 +63,8 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
         {
             const wchar_t* file = (shaderType == ShaderType::PerlinNoise)
                 ? L"././Shaders/ShaderNoise3D.hlsl"
+                : (shaderType == ShaderType::Phong)
+                ? L"././Shaders/Phong3D.hlsl"
                 : L"././Shaders/Shader3D.hlsl";
 
             D3DCompileFromFile(file, nullptr, nullptr,
@@ -220,5 +224,31 @@ void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
     ctx->IASetIndexBuffer(pIndexBuffer_, DXGI_FORMAT_R32_UINT, 0);
     ctx->VSSetShader(pVertexShader_, nullptr, 0);
     ctx->PSSetShader(pPixelShader_, nullptr, 0);
+    if (shaderType_ == ShaderType::Phong && s_pLightBuffer)
+        ctx->PSSetConstantBuffers(3, 1, &s_pLightBuffer);
+
     ctx->DrawIndexedInstanced(static_cast<UINT>(indexCount_), static_cast<UINT>(count), 0, 0, 0);
+}
+
+void Rendering3D::SetLight(Engine::Render::Pipeline* pPipeline, const LightData& data)
+{
+    auto* device = pPipeline->GetDevice();
+    auto* ctx    = pPipeline->GetDeviceContext();
+
+    if (!s_pLightBuffer)
+    {
+        D3D11_BUFFER_DESC desc = {};
+        desc.Usage          = D3D11_USAGE_DYNAMIC;
+        desc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        desc.ByteWidth      = sizeof(LightData);
+        device->CreateBuffer(&desc, nullptr, &s_pLightBuffer);
+    }
+
+    D3D11_MAPPED_SUBRESOURCE sub = {};
+    ctx->Map(s_pLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub);
+    memcpy(sub.pData, &data, sizeof(LightData));
+    ctx->Unmap(s_pLightBuffer, 0);
+
+    ctx->PSSetConstantBuffers(3, 1, &s_pLightBuffer);
 }

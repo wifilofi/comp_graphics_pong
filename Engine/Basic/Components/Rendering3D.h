@@ -10,7 +10,21 @@ namespace Basic::Components
     class Rendering3D
     {
     public:
-        enum class ShaderType { SolidColor, PerlinNoise, ShaderTex };
+        enum class ShaderType { SolidColor, PerlinNoise, ShaderTex, Phong };
+
+        struct LightData
+        {
+            float3 lightPos;
+            float  _pad0       = 0.f;
+            float3 lightColor  = { 1.f, 1.f, 1.f };
+            float  _pad1       = 0.f;
+            float3 cameraPos;
+            float  _pad2       = 0.f;
+            float  ambientStrength  = 0.1f;
+            float  specularStrength = 0.5f;
+            float  shininess        = 32.f;
+            float  _pad3       = 0.f;
+        };
 
         struct Vertex3D
         {
@@ -33,6 +47,8 @@ namespace Basic::Components
                        ID3D11ShaderResourceView* pTextureSRV = nullptr);
 
         void DrawInstanced(const std::vector<ObjectData>& instances);
+
+        static void SetLight(Engine::Render::Pipeline* pPipeline, const LightData& data);
 
     private:
         void EnsureInstanceBuffer(int count);
