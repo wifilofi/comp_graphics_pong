@@ -36,9 +36,9 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
     indexCount_  = static_cast<int32>(indices.size());
     auto* device = pPipeline_->GetDevice();
 
-    static DXVertexShader* s_pVS[5]     = {};
-    static DXPixelShader*  s_pPS[5]     = {};
-    static DXInputLayout*  s_pLayout[5] = {};
+    static DXVertexShader* s_pVS[6]     = {};
+    static DXPixelShader*  s_pPS[6]     = {};
+    static DXInputLayout*  s_pLayout[6] = {};
 
     const int idx = static_cast<int>(shaderType);
 
@@ -67,6 +67,8 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
                 ? L"././Shaders/Phong3D.hlsl"
                 : (shaderType == ShaderType::PhongTex)
                 ? L"././Shaders/PhongTex3D.hlsl"
+                : (shaderType == ShaderType::Glow)
+                ? L"././Shaders/GlowSphere.hlsl"
                 : L"././Shaders/Shader3D.hlsl";
 
             D3DCompileFromFile(file, nullptr, nullptr,
@@ -151,8 +153,28 @@ void Rendering3D::Construct(Engine::Render::Pipeline* pPipeline,
         desc.CullMode = D3D11_CULL_NONE;
         device->CreateRasterizerState(&desc, &s_pRastNoCull);
     }
-    pRasterizerState_ = (shaderType == ShaderType::ShaderTex || shaderType == ShaderType::PhongTex)
+    pRasterizerState_ = (shaderType == ShaderType::ShaderTex || shaderType == ShaderType::PhongTex
+                      || shaderType == ShaderType::Glow)
                       ? s_pRastNoCull : s_pRastCull;
+
+    if (shaderType == ShaderType::Glow)
+    {
+        static ID3D11BlendState* s_pAdditive = nullptr;
+        if (!s_pAdditive)
+        {
+            D3D11_BLEND_DESC bd = {};
+            bd.RenderTarget[0].BlendEnable           = TRUE;
+            bd.RenderTarget[0].SrcBlend              = D3D11_BLEND_SRC_ALPHA;
+            bd.RenderTarget[0].DestBlend             = D3D11_BLEND_ONE;
+            bd.RenderTarget[0].BlendOp               = D3D11_BLEND_OP_ADD;
+            bd.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
+            bd.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ZERO;
+            bd.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
+            bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+            device->CreateBlendState(&bd, &s_pAdditive);
+        }
+        pAdditiveBlend_ = s_pAdditive;
+    }
 
     if (shaderType == ShaderType::ShaderTex || shaderType == ShaderType::PhongTex)
     {
@@ -230,7 +252,22 @@ void Rendering3D::DrawInstanced(const std::vector<ObjectData>& instances)
     if ((shaderType_ == ShaderType::Phong || shaderType_ == ShaderType::PhongTex) && s_pLightBuffer)
         ctx->PSSetConstantBuffers(3, 1, &s_pLightBuffer);
 
+    ID3D11BlendState* prevBlend = nullptr;
+    float prevFactor[4]         = {};
+    UINT  prevMask              = 0;
+    if (pAdditiveBlend_)
+    {
+        ctx->OMGetBlendState(&prevBlend, prevFactor, &prevMask);
+        ctx->OMSetBlendState(pAdditiveBlend_, nullptr, 0xFFFFFFFF);
+    }
+
     ctx->DrawIndexedInstanced(static_cast<UINT>(indexCount_), static_cast<UINT>(count), 0, 0, 0);
+
+    if (pAdditiveBlend_)
+    {
+        ctx->OMSetBlendState(prevBlend, prevFactor, prevMask);
+        if (prevBlend) prevBlend->Release();
+    }
 }
 
 void Rendering3D::SetLight(Engine::Render::Pipeline* pPipeline, const LightData& data)

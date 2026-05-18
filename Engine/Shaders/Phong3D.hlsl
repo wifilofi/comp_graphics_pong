@@ -74,7 +74,7 @@ float4 PSMain(PS_IN input) : SV_Target
         float  dist  = length(ldir);
         ldir        /= dist;
         float  atten = lightPos[i].w > 0.5
-                     ? 1.0 / (1.0 + 0.09 * dist + 0.032 * dist * dist)
+                     ? 1.0 / (1.0 + 0.005 * dist + 0.0005 * dist * dist)
                      : 1.0;
 
         float  diff    = max(dot(norm, ldir), 0.0);

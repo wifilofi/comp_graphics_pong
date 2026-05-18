@@ -82,6 +82,7 @@ namespace Katamari
         Basic::Components::Rendering3D planeRenderer_;
         Basic::Components::Rendering3D spherePickupRenderer_;
         Basic::Components::Rendering3D boxPickupRenderer_;
+        Basic::Components::Rendering3D shotLightRenderer_;
 
         std::unique_ptr<Basic::Components::Rendering3D> fbxMeshRenderer_;
         ID3D11ShaderResourceView*                        fbxTexSRV_ = nullptr;

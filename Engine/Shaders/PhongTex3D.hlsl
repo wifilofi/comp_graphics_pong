@@ -54,8 +54,8 @@ PS_IN VSMain(VS_IN input, uint instanceID : SV_InstanceID)
     output.pos      = mul(viewPos, projection);
     output.worldPos = worldPos.xyz;
     output.normal   = normalize(mul(float4(input.normal, 0.0), obj.model).xyz);
-    output.uv       = input.uv * obj.color2.w;
-    output.color    = obj.color;
+    output.uv    = input.uv * obj.color2.w;
+    output.color = obj.color;
     return output;
 }
 
@@ -74,7 +74,7 @@ float4 PSMain(PS_IN input) : SV_Target
         float  dist  = length(ldir);
         ldir        /= dist;
         float  atten = lightPos[i].w > 0.5
-                     ? 1.0 / (1.0 + 0.09 * dist + 0.032 * dist * dist)
+                     ? 1.0 / (1.0 + 0.005 * dist + 0.0005 * dist * dist)
                      : 1.0;
 
         float  diff    = max(dot(norm, ldir), 0.0);

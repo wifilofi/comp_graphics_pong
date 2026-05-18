@@ -60,6 +60,7 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
         DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, grassTex.c_str(),  nullptr, &grassTexSRV_);
     }
     ballRenderer_        .Construct(pPipeline_, sphereV, sphereI, ST::PhongTex, ballTexSRV_);
+    shotLightRenderer_   .Construct(pPipeline_, sphereV, sphereI, ST::Glow);
     spherePickupRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::PhongTex, cloudsTexSRV_);
     planeRenderer_       .Construct(pPipeline_, boxV,    boxI,    ST::PhongTex, grassTexSRV_);
     boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::Phong);
@@ -321,10 +322,27 @@ void KatamariWorld::Render(float /*delta*/)
         {
             const int i         = light.numLights++;
             light.lightPos[i]   = float4(sl.pos.x, sl.pos.y, sl.pos.z, 1.f);  // w=1: point light
-            light.lightColor[i] = float4(sl.color.x, sl.color.y, sl.color.z, 0.f);
+            light.lightColor[i] = float4(sl.color.x * 3.f, sl.color.y * 3.f, sl.color.z * 3.f, 0.f);
         }
 
         Basic::Components::Rendering3D::SetLight(pPipeline_, light);
+    }
+
+    // Shot light spheres
+    if (!shotLights_.empty())
+    {
+        std::vector<OD> lightODs;
+        lightODs.reserve(shotLights_.size());
+        for (const auto& sl : shotLights_)
+        {
+            OD od;
+            od.model  = (float4x4::CreateScale(1.8f) *
+                         float4x4::CreateTranslation(sl.pos)).Transpose();
+            od.color  = float4(sl.color.x, sl.color.y, sl.color.z, 0.9f);
+            od.color2 = float4(0.f, 0.f, 0.f, 1.f);
+            lightODs.push_back(od);
+        }
+        shotLightRenderer_.DrawInstanced(lightODs);
     }
 
     // Plane

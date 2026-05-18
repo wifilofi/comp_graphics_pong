@@ -10,7 +10,7 @@ namespace Basic::Components
     class Rendering3D
     {
     public:
-        enum class ShaderType { SolidColor, PerlinNoise, ShaderTex, Phong, PhongTex };
+        enum class ShaderType { SolidColor, PerlinNoise, ShaderTex, Phong, PhongTex, Glow };
 
         static constexpr int kMaxLights = 16;
 
@@ -62,6 +62,7 @@ namespace Basic::Components
         DXBuffer*                  pInstanceBuffer_   = nullptr;
         ID3D11ShaderResourceView*  pInstanceSRV_      = nullptr;
         DXRasterizerState*         pRasterizerState_  = nullptr;
+        ID3D11BlendState*          pAdditiveBlend_    = nullptr;
         ID3D11ShaderResourceView*  pTextureSRV_       = nullptr;
         ID3D11SamplerState*        pSamplerState_     = nullptr;
         ShaderType                 shaderType_        = ShaderType::SolidColor;
