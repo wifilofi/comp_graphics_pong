@@ -31,6 +31,7 @@ static constexpr float kFriction  = 0.92f;
 static constexpr float kMaxSpeed  = 0.35f;
 static constexpr float kPlaneHalf = 400.f;
 static constexpr float kJumpForce    = 0.5f;
+static constexpr float kRecoilForce  = 0.3f;
 static constexpr float kGravityRise  = 0.012f;
 static constexpr float kGravityFall  = 0.030f;
 
@@ -126,12 +127,15 @@ void KatamariWorld::FixedUpdate()
 
         ShotLight sl;
         sl.pos   = ballCenter + float3(0.f, ballRadius_, 0.f);
-        sl.vel   = fwd * 3.f + float3(0.f, 0.5f, 0.f);
+        sl.vel   = fwd * 3.f;
         sl.color = kLightColors[colorIdx++ % 6];
         sl.life  = 300.f;
 
         if (static_cast<int>(shotLights_.size()) < Basic::Components::Rendering3D::kMaxLights - 1)
             shotLights_.push_back(sl);
+
+        ballVel_.x = std::clamp(ballVel_.x - fwd.x * kRecoilForce, -kMaxSpeed, kMaxSpeed);
+        ballVel_.z = std::clamp(ballVel_.z - fwd.z * kRecoilForce, -kMaxSpeed, kMaxSpeed);
     }
     lmbWasDown_ = lmbDown;
 

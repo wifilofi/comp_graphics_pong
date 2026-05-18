@@ -20,6 +20,7 @@ namespace Engine::Render
         float3 GetForwardDir()   const;
         float3 GetRightDir()     const;
         float3 GetEyePosition()  const;
+        float3 GetAimDir()       const;
 
     private:
         void OnMouse(const Engine::Input::Mouse::Event& e);

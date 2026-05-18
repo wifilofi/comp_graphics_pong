@@ -60,3 +60,8 @@ float3 ThirdPersonCamera::GetEyePosition() const
     const float z = distance_ * cosf(pitch_) * cosf(yaw_);
     return target_ + float3(x, y, z);
 }
+
+float3 ThirdPersonCamera::GetAimDir() const
+{
+    return float3(-cosf(pitch_) * sinf(yaw_), -sinf(pitch_), -cosf(pitch_) * cosf(yaw_));
+}
