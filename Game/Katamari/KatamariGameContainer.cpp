@@ -18,6 +18,9 @@ void KatamariGameContainer::Setup(Game* pGame)
     auto* pp = new Engine::Render::PostProcess();
     const auto sz = pipeline->GetSize();
     pp->Construct(pipeline, sz.x, sz.y);
+
+    
     pp->AddPass(L"././Shaders/GammaCorrection.hlsl");
+    pp->AddPass(L"././Shaders/Posterize.hlsl");
     pipeline->SetPostProcess(pp);
 }

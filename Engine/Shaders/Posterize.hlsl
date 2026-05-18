@@ -5,9 +5,8 @@ struct PS_IN { float4 pos : SV_POSITION; float2 uv : TEXCOORD0; };
 
 float4 PSMain(PS_IN input) : SV_Target
 {
-    float4 col = sceneTex.Sample(sampler0, input.uv);
-    col.rgb = pow(abs(col.rgb), 1.0 / 2.2);
-	//col.rgb = pow(col.rgb, 2.2);
-	//col = col * 2.0;
+    float4 col    = sceneTex.Sample(sampler0, input.uv);
+    float  levels = 8.0;
+    col.rgb       = floor(col.rgb * levels) / levels;
     return col;
 }
