@@ -5,7 +5,8 @@
       "Bash(Get-ChildItem *)",
       "Bash(dir \"C:\\\\Users\\\\gfn\\\\Documents\\\\_codern\\\\pong\\\\Engine\" /s /b)",
       "Bash(grep -E \"^.*\\\\\\\\[^\\\\\\\\]*$\")",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "PowerShell(Rename-Item *)"
     ]
   }
 }

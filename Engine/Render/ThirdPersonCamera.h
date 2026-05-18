@@ -17,8 +17,9 @@ namespace Engine::Render
 
         void SetTarget(float3 target) { target_ = target; }
 
-        float3 GetForwardDir() const;
-        float3 GetRightDir()   const;
+        float3 GetForwardDir()   const;
+        float3 GetRightDir()     const;
+        float3 GetEyePosition()  const;
 
     private:
         void OnMouse(const Engine::Input::Mouse::Event& e);

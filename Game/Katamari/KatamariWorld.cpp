@@ -56,9 +56,9 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
         DirectX::CreateWICTextureFromFile(pPipeline_->GetDevice(), nullptr, texPath.c_str(), nullptr, &ballTexSRV_);
     }
     ballRenderer_        .Construct(pPipeline_, sphereV, sphereI, ST::ShaderTex, ballTexSRV_);
-    spherePickupRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::PerlinNoise);
-    planeRenderer_       .Construct(pPipeline_, boxV,    boxI,    ST::SolidColor);
-    boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::PerlinNoise);
+    spherePickupRenderer_.Construct(pPipeline_, sphereV, sphereI, ST::Phong);
+    planeRenderer_       .Construct(pPipeline_, boxV,    boxI,    ST::Phong);
+    boxPickupRenderer_   .Construct(pPipeline_, boxV,    boxI,    ST::Phong);
 
     SpawnPickups();
 }
@@ -265,6 +265,18 @@ void KatamariWorld::AbsorbFbxPickup(FbxPickup& p)
 void KatamariWorld::Render(float /*delta*/)
 {
     using OD = Basic::Components::Rendering3D::ObjectData;
+    using LD = Basic::Components::Rendering3D::LightData;
+
+    {
+        LD light;
+        light.lightPos         = float3(80.f, 120.f, 60.f);
+        light.lightColor       = float3(1.f, 0.98f, 0.92f);
+        light.cameraPos        = camera_.GetEyePosition();
+        light.ambientStrength  = 0.15f;
+        light.specularStrength = 0.4f;
+        light.shininess        = 48.f;
+        Basic::Components::Rendering3D::SetLight(pPipeline_, light);
+    }
 
     // Plane
     {

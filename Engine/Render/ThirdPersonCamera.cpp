@@ -52,3 +52,11 @@ float3 ThirdPersonCamera::GetRightDir() const
 {
     return float3(cosf(yaw_), 0.f, -sinf(yaw_));
 }
+
+float3 ThirdPersonCamera::GetEyePosition() const
+{
+    const float x = distance_ * cosf(pitch_) * sinf(yaw_);
+    const float y = distance_ * sinf(pitch_);
+    const float z = distance_ * cosf(pitch_) * cosf(yaw_);
+    return target_ + float3(x, y, z);
+}
