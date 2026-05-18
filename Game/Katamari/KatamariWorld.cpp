@@ -497,7 +497,6 @@ void KatamariWorld::Render(float /*delta*/)
     if (!boxODs.empty())    boxPickupRenderer_.DrawInstanced(boxODs);
     if (fbxMeshRenderer_ && !fbxODs.empty()) fbxMeshRenderer_->DrawInstanced(fbxODs);
 
-    // Unbind shadow SRV to avoid resource hazard on next frame's shadow pass
     ID3D11ShaderResourceView* nullSRV = nullptr;
     ctx->PSSetShaderResources(2, 1, &nullSRV);
 }
