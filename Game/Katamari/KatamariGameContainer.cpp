@@ -18,9 +18,14 @@ void KatamariGameContainer::Setup(Game *pGame)
     auto *pp = new Engine::Render::PostProcess();
     const auto sz = pipeline->GetSize();
     pp->Construct(pipeline, sz.x, sz.y);
+    pp->AddPass(L"././Shaders/Vignette.hlsl");
+    pp->AddPass(L"././Shaders/LcdLines.hlsl");
+    pp->AddPass(L"././Shaders/HueShift.hlsl");
 
     pp->AddPass(L"././Shaders/Posterize.hlsl");
-    pp->AddPass(L"././Shaders/GammaCorrection.hlsl");
+    pp->AddPass(L"././Shaders/ChromaticAbberation.hlsl");
 
+    //asas
+    pp->AddPass(L"././Shaders/GammaCorrection.hlsl");
     pipeline->SetPostProcess(pp);
 }

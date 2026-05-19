@@ -69,7 +69,6 @@ void KatamariWorld::Construct(Engine::Render::Pipeline* pPipeline)
 
     SpawnPickups();
 
-    // Shadow map resources
     {
         auto* device = pPipeline_->GetDevice();
 
